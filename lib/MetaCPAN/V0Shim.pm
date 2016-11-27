@@ -114,6 +114,9 @@ A cpanm query looks like:
     "fields" : [ "date", "release", "author", "module", "status" ]
   }
 
+The query is validated rather strictly against the form cpanm sends, since this
+module doesn't really understand Elasticsearch syntax.
+
 The return value will be a hashref with module, version, and dev entries.
 Version will be a rule spec as used by L<CPAN::Meta::Spec>, as C</download_url/>
 accepts.
