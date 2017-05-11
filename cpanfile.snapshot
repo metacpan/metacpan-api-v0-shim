@@ -55,6 +55,20 @@ DISTRIBUTIONS
     requirements:
       ExtUtils::MakeMaker 0
       Pod::Text 2.08
+  Data-Dump-1.23
+    pathname: G/GA/GAAS/Data-Dump-1.23.tar.gz
+    provides:
+      Data::Dump 1.23
+      Data::Dump::FilterContext undef
+      Data::Dump::Filtered undef
+      Data::Dump::Trace 0.02
+      Data::Dump::Trace::Call 0.02
+      Data::Dump::Trace::Wrapper 0.02
+    requirements:
+      ExtUtils::MakeMaker 0
+      Symbol 0
+      Test 0
+      perl 5.006
   Devel-GlobalDestruction-0.14
     pathname: H/HA/HAARG/Devel-GlobalDestruction-0.14.tar.gz
     provides:
@@ -241,306 +255,14 @@ DISTRIBUTIONS
       Test::Deep 0
       Test::More 0.88
       perl 5.008001
-  Hash-MultiValue-0.16
-    pathname: A/AR/ARISTOTLE/Hash-MultiValue-0.16.tar.gz
+  HTTP-Parser-XS-0.17
+    pathname: K/KA/KAZUHO/HTTP-Parser-XS-0.17.tar.gz
     provides:
-      Hash::MultiValue 0.16
+      HTTP::Parser::XS 0.17
+      HTTP::Parser::XS::PP undef
     requirements:
-      ExtUtils::MakeMaker 0
-      perl 5.008001
-  IO-HTML-1.001
-    pathname: C/CJ/CJM/IO-HTML-1.001.tar.gz
-    provides:
-      IO::HTML 1.001
-    requirements:
-      Carp 0
-      Encode 2.10
-      Exporter 5.57
-      ExtUtils::MakeMaker 6.30
-  JSON-MaybeXS-1.003008
-    pathname: E/ET/ETHER/JSON-MaybeXS-1.003008.tar.gz
-    provides:
-      JSON::MaybeXS 1.003008
-    requirements:
-      Carp 0
-      Cpanel::JSON::XS 2.3310
-      ExtUtils::CBuilder 0.27
-      ExtUtils::MakeMaker 0
-      File::Spec 0
-      File::Temp 0
-      JSON::PP 2.27300
-      Scalar::Util 0
-      perl 5.006
-  LWP-MediaTypes-6.02
-    pathname: G/GA/GAAS/LWP-MediaTypes-6.02.tar.gz
-    provides:
-      LWP::MediaTypes 6.02
-    requirements:
-      ExtUtils::MakeMaker 0
-      perl 5.006002
-  Module-Build-0.4220
-    pathname: L/LE/LEONT/Module-Build-0.4220.tar.gz
-    provides:
-      Module::Build 0.4220
-      Module::Build::Base 0.4220
-      Module::Build::Compat 0.4220
-      Module::Build::Config 0.4220
-      Module::Build::Cookbook 0.4220
-      Module::Build::Dumper 0.4220
-      Module::Build::Notes 0.4220
-      Module::Build::PPMMaker 0.4220
-      Module::Build::Platform::Default 0.4220
-      Module::Build::Platform::MacOS 0.4220
-      Module::Build::Platform::Unix 0.4220
-      Module::Build::Platform::VMS 0.4220
-      Module::Build::Platform::VOS 0.4220
-      Module::Build::Platform::Windows 0.4220
-      Module::Build::Platform::aix 0.4220
-      Module::Build::Platform::cygwin 0.4220
-root@metacpan-dev:/home/vagrant/api-v0-shim# cat cpanfile.snapshot
-# carton snapshot format: version 1.0
-DISTRIBUTIONS
-  Apache-LogFormat-Compiler-0.33
-    pathname: K/KA/KAZEBURO/Apache-LogFormat-Compiler-0.33.tar.gz
-    provides:
-      Apache::LogFormat::Compiler 0.33
-    requirements:
-      Module::Build 0.38
-      POSIX 0
-      POSIX::strftime::Compiler 0.30
-      Time::Local 0
-      perl 5.008001
-  CPAN-DistnameInfo-0.12
-    pathname: G/GB/GBARR/CPAN-DistnameInfo-0.12.tar.gz
-    provides:
-      CPAN::DistnameInfo 0.12
-    requirements:
-      ExtUtils::MakeMaker 0
-      Test::More 0
-  Class-Inspector-1.31
-    pathname: P/PL/PLICEASE/Class-Inspector-1.31.tar.gz
-    provides:
-      Class::Inspector 1.31
-      Class::Inspector::Functions 1.31
-    requirements:
-      ExtUtils::MakeMaker 0
-      File::Spec 0.80
-      perl 5.006
-  Class-Method-Modifiers-2.12
-    pathname: E/ET/ETHER/Class-Method-Modifiers-2.12.tar.gz
-    provides:
-      Class::Method::Modifiers 2.12
-    requirements:
-      B 0
-      Carp 0
-      Exporter 0
-      ExtUtils::MakeMaker 0
-      base 0
-      perl 5.006
-      strict 0
-      warnings 0
-  Cookie-Baker-0.07
-    pathname: K/KA/KAZEBURO/Cookie-Baker-0.07.tar.gz
-    provides:
-      Cookie::Baker 0.07
-    requirements:
-      Exporter 0
-      Module::Build 0.38
-      URI::Escape 0
-      perl 5.008001
-  Cpanel-JSON-XS-3.0225
-    pathname: R/RU/RURBAN/Cpanel-JSON-XS-3.0225.tar.gz
-    provides:
-      Cpanel::JSON::XS 3.0225
-    requirements:
-      ExtUtils::MakeMaker 0
-      Pod::Text 2.08
-  Devel-GlobalDestruction-0.14
-    pathname: H/HA/HAARG/Devel-GlobalDestruction-0.14.tar.gz
-    provides:
-      Devel::GlobalDestruction 0.14
-    requirements:
-      ExtUtils::MakeMaker 0
-      Sub::Exporter::Progressive 0.001011
-      perl 5.006
-  Devel-StackTrace-2.02
-    pathname: D/DR/DROLSKY/Devel-StackTrace-2.02.tar.gz
-    provides:
-      Devel::StackTrace 2.02
-      Devel::StackTrace::Frame 2.02
-    requirements:
-      ExtUtils::MakeMaker 0
-      File::Spec 0
-      Scalar::Util 0
-      overload 0
-      perl 5.006
-      strict 0
-      warnings 0
-  Devel-StackTrace-AsHTML-0.15
-    pathname: M/MI/MIYAGAWA/Devel-StackTrace-AsHTML-0.15.tar.gz
-    provides:
-      Devel::StackTrace::AsHTML 0.15
-    requirements:
-      Devel::StackTrace 0
-      ExtUtils::MakeMaker 0
-  Encode-Locale-1.05
-    pathname: G/GA/GAAS/Encode-Locale-1.05.tar.gz
-    provides:
-      Encode::Locale 1.05
-    requirements:
-      Encode 2
-      Encode::Alias 0
-      ExtUtils::MakeMaker 0
-      perl 5.008
-  ExtUtils-Config-0.008
-    pathname: L/LE/LEONT/ExtUtils-Config-0.008.tar.gz
-    provides:
-      ExtUtils::Config 0.008
-    requirements:
-      Data::Dumper 0
-      ExtUtils::MakeMaker 6.30
-      strict 0
-      warnings 0
-  ExtUtils-Helpers-0.026
-    pathname: L/LE/LEONT/ExtUtils-Helpers-0.026.tar.gz
-    provides:
-      ExtUtils::Helpers 0.026
-      ExtUtils::Helpers::Unix 0.026
-      ExtUtils::Helpers::VMS 0.026
-      ExtUtils::Helpers::Windows 0.026
-    requirements:
-      Carp 0
-      Exporter 5.57
-      ExtUtils::MakeMaker 0
-      File::Basename 0
-      File::Copy 0
-      File::Spec::Functions 0
-      Text::ParseWords 3.24
-      perl 5.006
-      strict 0
-      warnings 0
-  ExtUtils-InstallPaths-0.011
-    pathname: L/LE/LEONT/ExtUtils-InstallPaths-0.011.tar.gz
-    provides:
-      ExtUtils::InstallPaths 0.011
-    requirements:
-      Carp 0
-      ExtUtils::Config 0.002
-      ExtUtils::MakeMaker 0
-      File::Spec 0
-      perl 5.006
-      strict 0
-      warnings 0
-  File-ShareDir-1.102
-    pathname: R/RE/REHSACK/File-ShareDir-1.102.tar.gz
-    provides:
-      File::ShareDir 1.102
-    requirements:
-      Carp 0
-      Class::Inspector 1.12
-      ExtUtils::MakeMaker 0
-      File::ShareDir::Install 0.03
-      File::Spec 0.80
-      perl 5.008001
-      warnings 0
-  File-ShareDir-Install-0.11
-    pathname: E/ET/ETHER/File-ShareDir-Install-0.11.tar.gz
-    provides:
-      File::ShareDir::Install 0.11
-    requirements:
-      Carp 0
-      Exporter 0
-      File::Spec 0
-      IO::Dir 0
-      Module::Build::Tiny 0.034
-      perl 5.008
-      strict 0
-      warnings 0
-  Filesys-Notify-Simple-0.12
-    pathname: M/MI/MIYAGAWA/Filesys-Notify-Simple-0.12.tar.gz
-    provides:
-      Filesys::Notify::Simple 0.12
-    requirements:
-      ExtUtils::MakeMaker 6.30
-  HTTP-Date-6.02
-    pathname: G/GA/GAAS/HTTP-Date-6.02.tar.gz
-    provides:
-      HTTP::Date 6.02
-    requirements:
-      ExtUtils::MakeMaker 0
-      Time::Local 0
-      perl 5.006002
-  HTTP-Entity-Parser-0.18
-    pathname: K/KA/KAZEBURO/HTTP-Entity-Parser-0.18.tar.gz
-    provides:
-      HTTP::Entity::Parser 0.18
-      HTTP::Entity::Parser::JSON undef
-      HTTP::Entity::Parser::MultiPart undef
-      HTTP::Entity::Parser::OctetStream undef
-      HTTP::Entity::Parser::UrlEncoded undef
-    requirements:
-      Encode 0
-      File::Temp 0
-      HTTP::MultiPartParser 0
-      Hash::MultiValue 0
-      JSON::MaybeXS 1.003007
-      Module::Build::Tiny 0.035
-      Module::Load 0
-      Stream::Buffered 0
-      WWW::Form::UrlEncoded 0.23
-      perl 5.008005
-  HTTP-Headers-Fast-0.20
-    pathname: T/TO/TOKUHIROM/HTTP-Headers-Fast-0.20.tar.gz
-    provides:
-      HTTP::Headers::Fast 0.20
-    requirements:
-      HTTP::Date 0
-      Module::Build 0.38
-      perl 5.008001
-  HTTP-Message-6.11
-    pathname: E/ET/ETHER/HTTP-Message-6.11.tar.gz
-    provides:
-      HTTP::Config 6.11
-      HTTP::Headers 6.11
-      HTTP::Headers::Auth 6.11
-      HTTP::Headers::ETag 6.11
-      HTTP::Headers::Util 6.11
-      HTTP::Message 6.11
-      HTTP::Request 6.11
-      HTTP::Request::Common 6.11
-      HTTP::Response 6.11
-      HTTP::Status 6.11
-    requirements:
-      Compress::Raw::Zlib 0
-      Encode 2.21
-      Encode::Locale 1
-      Exporter 5.57
-      ExtUtils::MakeMaker 0
-      HTTP::Date 6
-      IO::Compress::Bzip2 2.021
-      IO::Compress::Deflate 0
-      IO::Compress::Gzip 0
-      IO::HTML 0
-      IO::Uncompress::Bunzip2 2.021
-      IO::Uncompress::Gunzip 0
-      IO::Uncompress::Inflate 0
-      IO::Uncompress::RawInflate 0
-      LWP::MediaTypes 6
-      MIME::Base64 2.1
-      MIME::QuotedPrint 0
-      URI 1.10
-      perl 5.008001
-  HTTP-MultiPartParser-0.01
-    pathname: C/CH/CHANSEN/HTTP-MultiPartParser-0.01.tar.gz
-    provides:
-      HTTP::MultiPartParser 0.01
-    requirements:
-      Carp 0
-      ExtUtils::MakeMaker 6.59
-      Scalar::Util 0
-      Test::Deep 0
-      Test::More 0.88
-      perl 5.008001
+      ExtUtils::MakeMaker 6.36
+      Test::More 0.96
   Hash-MultiValue-0.16
     pathname: A/AR/ARISTOTLE/Hash-MultiValue-0.16.tar.gz
     provides:
@@ -693,6 +415,39 @@ DISTRIBUTIONS
       Sub::Defer 2.003001
       Sub::Quote 2.003001
       perl 5.006
+  Net-Server-2.008
+    pathname: R/RH/RHANDOM/Net-Server-2.008.tar.gz
+    provides:
+      Net::Server 2.008
+      Net::Server::Daemonize 0.06
+      Net::Server::Fork undef
+      Net::Server::HTTP undef
+      Net::Server::INET undef
+      Net::Server::INET::Handle undef
+      Net::Server::Log::Log::Log4perl undef
+      Net::Server::Log::Sys::Syslog undef
+      Net::Server::MultiType undef
+      Net::Server::Multiplex undef
+      Net::Server::Multiplex::MUX undef
+      Net::Server::PSGI undef
+      Net::Server::PreFork undef
+      Net::Server::PreForkSimple undef
+      Net::Server::Proto undef
+      Net::Server::Proto::SSL undef
+      Net::Server::Proto::SSLEAY undef
+      Net::Server::Proto::TCP undef
+      Net::Server::Proto::UDP undef
+      Net::Server::Proto::UNIX undef
+      Net::Server::Proto::UNIXDGRAM undef
+      Net::Server::SIG 0.03
+      Net::Server::Single undef
+      Net::Server::TiedHandle 2.008
+    requirements:
+      ExtUtils::MakeMaker 0
+      IO::Socket 0
+      POSIX 0
+      Socket 0
+      Time::HiRes 0
   POSIX-strftime-Compiler-0.42
     pathname: K/KA/KAZEBURO/POSIX-strftime-Compiler-0.42.tar.gz
     provides:
@@ -811,6 +566,24 @@ DISTRIBUTIONS
     requirements:
       Exporter 5.57
       perl 5.006
+  Starman-0.4014
+    pathname: M/MI/MIYAGAWA/Starman-0.4014.tar.gz
+    provides:
+      HTTP::Server::PSGI::Net::Server::PreFork undef
+      Plack::Handler::Starman undef
+      Starman 0.4014
+      Starman::Server undef
+    requirements:
+      Data::Dump 0
+      HTTP::Date 0
+      HTTP::Parser::XS 0
+      HTTP::Status 0
+      Module::Build::Tiny 0.039
+      Net::Server 2.007
+      Plack 0.9971
+      Test::TCP 2.00
+      parent 0
+      perl 5.008001
   Stream-Buffered-0.03
     pathname: D/DO/DOY/Stream-Buffered-0.03.tar.gz
     provides:
