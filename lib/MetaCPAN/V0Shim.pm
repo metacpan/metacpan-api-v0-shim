@@ -375,12 +375,14 @@ sub file_search {
     my $mod_data = $self->module_data($params)
       or return search_return;
 
+    my $date = $mod_data->{date};
+    $date =~ s/Z?\z/Z/;
     search_return {
       _score => 1,
       fields => {
         release => $mod_data->{release},
         author => $mod_data->{author},
-        date => $mod_data->{date},
+        date => $date,
         status => $mod_data->{status},
         module => [
           {
