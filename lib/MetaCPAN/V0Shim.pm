@@ -421,29 +421,15 @@ sub redirect {
   };
 }
 
-my $gone = [410, ['Content-Type' => 'text/plain'], ['Gone']];
-
-sub cpanm_only {
-  sub {
-    my $app = shift;
-    sub {
-      my $env = shift;
-      return $gone
-        if $env->{HTTP_USER_AGENT} !~ /\bcpanminus\b/;
-      $app->($env);
-    }
-  };
-}
+my $gone = [301, ['Location' => 'https://fastapi.metacpan.org/'], ['Moved to https://fastapi.metacpan.org/']];
 
 sub to_app {
   my $self = shift;
   builder {
     mount '/file/_search' => builder {
-      enable cpanm_only;
       sub { $self->file_search(@_) };
     };
     mount '/release/_search' => builder {
-      enable cpanm_only;
       sub { $self->release_search(@_) };
     };
     mount '/pod' => $self->redirect('pod');
