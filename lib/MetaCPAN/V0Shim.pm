@@ -192,13 +192,13 @@ sub cpanm_query_to_params {
       @version = ("== $ver");
     }
     elsif (my $range = _deep($filter, qw(range module.version_numified))) {
-      die "invalid range"
-        if (keys %$range) != 1;
-      my ($cmp, $ver) = %$range;
-      my %ops = qw(lt < lte <= gt > gte >=);
-      my $op = $ops{$cmp}
-        or die "unsupported comparison $cmp";
-      push @version, "$op $ver";
+      for my $cmp (keys %$range) {
+        my $ver = $range->{$cmp};
+        my %ops = qw(lt < lte <= gt > gte >=);
+        my $op = $ops{$cmp}
+          or die "unsupported comparison $cmp";
+        push @version, "$op $ver";
+      }
     }
     elsif (my $nots = _deep($filter, qw(not or))) {
       my @nots = map _deeps($_, qw(term module.version_numified)), @$nots;
