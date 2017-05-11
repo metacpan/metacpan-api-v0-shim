@@ -31,6 +31,7 @@ sub _deep {
   $struct;
 }
 
+my $json = JSON::MaybeXS->new(pretty => 1, utf8 => 1);
 sub json_return {
   my $output = shift;
   my %output = %$output;
@@ -39,7 +40,7 @@ sub json_return {
   [
     $code,
     [ 'Content-Type' => 'application/json; charset=utf-8' ],
-    [ encode_json(\%output) ],
+    [ $json->encode(\%output) ],
   ];
 }
 
@@ -234,10 +235,10 @@ sub module_data {
   my $response = $ua->get($url);
   if (!$response->{success}) {
     my $error = $response->{content};
-    eval { $error = decode_json($error) };
+    eval { $error = $json->decode($error) };
     die $error;
   }
-  my $data = decode_json($response->{content});
+  my $data = $json->decode($response->{content});
   if (!$data->{download_url}) {
     return;
   }
@@ -347,15 +348,15 @@ sub release_data {
   my $ua = $self->ua;
   my $response = $ua->post($self->metacpan_url.'release/_search', {
     headers => { 'Content-Type' => 'application/json; charset=utf-8' },
-    content => encode_json($query),
+    content => $json->encode($query),
   });
   if (!$response->{success}) {
     my $error = $response->{content};
-    eval { $error = json_decode($error) };
+    eval { $error = $json->decode($error) };
     die $error;
   }
 
-  my $data = decode_json($response->{content});
+  my $data = $json->decode($response->{content});
   my $hits = $data->{hits}{hits} || die $data;
 
   map +{
@@ -371,7 +372,7 @@ sub file_search {
 
   my $out = eval {
     my $source = $req->param('source');
-    my $params = $self->cpanm_query_to_params(decode_json($source));
+    my $params = $self->cpanm_query_to_params($json->decode($source));
     my $mod_data = $self->module_data($params)
       or return search_return;
 
@@ -410,7 +411,7 @@ sub release_search {
   my $req = Plack::Request->new($env);
   my $out = eval {
     my $source = $req->param('source');
-    my $params = $self->cpanm_release_to_params(decode_json($source));
+    my $params = $self->cpanm_release_to_params($json->decode($source));
     search_return map +{ fields => $_ }, $self->release_data($params);
   };
   if ($@) {
