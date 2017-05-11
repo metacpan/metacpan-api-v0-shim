@@ -141,6 +141,13 @@ sub cpanm_query_to_params {
     die "unsupported fields ".join(", ", @extra)
       if @extra;
   }
+  if (my $sort = delete $search->{sort}) {
+    my @extra = grep !(
+      (keys %$_)[0] eq 'date'
+    ), @$sort;
+    die "unsupported sort fields ".join(", ", @extra)
+      if @extra;
+  }
 
   my $query = _deep($search, 'query')
     or die "no query found";
