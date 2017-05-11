@@ -414,7 +414,9 @@ sub redirect {
   my $base_url = $metacpan_url.$base.'/';
   sub {
     my $env = shift;
-    my $url = $base_url.uri_escape($env->{PATH_INFO});
+    my $path = $env->{PATH_INFO};
+    $path =~ s{^/}{};
+    my $url = $base_url.uri_escape($path);
     $url .= '?'.$env->{QUERY_STRING}
       if defined $env->{QUERY_STRING} && length $env->{QUERY_STRING};
     [ 301, [ 'Location' => $url ], ['Moved'] ];
