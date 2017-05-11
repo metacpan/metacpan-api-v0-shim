@@ -6,3 +6,4 @@ requires 'CPAN::DistnameInfo';
 requires 'URI::Escape';
 requires 'Starman';
 requires 'Moo';
+requires 'IO::Socket::SSL' => '1.42';
