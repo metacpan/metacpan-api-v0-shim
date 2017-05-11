@@ -391,10 +391,14 @@ sub file_search {
       },
     };
   };
-  if ($@) {
+  if (my $e = $@) {
+    my $code = ref $e && $e->{code};
+    if ($code && $code == 404) {
+      return search_return;
+    }
     return json_return {
       error => $@,
-    }, 500;
+    }, $code||500;
   }
   $out;
 }
