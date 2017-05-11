@@ -234,7 +234,7 @@ sub module_data {
   my $response = $ua->get($url);
   if (!$response->{success}) {
     my $error = $response->{content};
-    eval { $error = json_decode($error) };
+    eval { $error = decode_json($error) };
     die $error;
   }
   my $data = decode_json($response->{content});
