@@ -421,7 +421,7 @@ sub redirect {
   };
 }
 
-my $gone = [301, ['Location' => 'https://fastapi.metacpan.org/'], ['Moved to https://fastapi.metacpan.org/']];
+my $gone = [410, ['Content-Type' => 'text/plain'], ['Gone']];
 
 sub to_app {
   my $self = shift;
