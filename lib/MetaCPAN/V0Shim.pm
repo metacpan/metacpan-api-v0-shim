@@ -290,26 +290,33 @@ sub cpanm_release_to_params {
       if @extra;
   }
 
-  my $filters = _deep($search, qw(filter and))
-    or die "no query found";
 
   my $release;
   my $author;
-  for my $filter (@$filters) {
-    if (my $rel = _deep($filter, qw(term release.name))) {
-      $release = $rel;
+
+  if (my $filters = _deep($search, qw(filter and))) {
+    for my $filter (@$filters) {
+      if (my $rel = _deep($filter, qw(term release.name))) {
+        $release = $rel;
+      }
+      elsif (my $au = _deep($filter, qw(term release.author))) {
+        $author = $au;
+      }
+      else {
+        die "unsupported query";
+      }
     }
-    elsif (my $au = _deep($filter, qw(term release.author))) {
-      $author = $au;
-    }
-    else {
-      die "unsupported query";
-    }
+  }
+  elsif (my $rel = _deep($search, qw(filter term release.name))) {
+    $release = $rel;
+  }
+  else {
+    die "no query found";
   }
 
   {
     release => $release,
-    author => $author,
+    (defined $author ? (author => $author) : ()),
   };
 }
 
