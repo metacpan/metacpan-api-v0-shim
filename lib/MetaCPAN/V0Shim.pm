@@ -380,7 +380,7 @@ sub file_search {
       fields => {
         release => $mod_data->{release},
         author => $mod_data->{author},
-        data => $mod_data->{date},
+        date => $mod_data->{date},
         status => $mod_data->{status},
         module => [
           {
