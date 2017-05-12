@@ -208,7 +208,7 @@ sub cpanm_query_to_params {
       }
     }
     elsif (my $nots = _deep($filter, qw(not or))) {
-      my @nots = map _deeps($_, qw(term module.version_numified)), @$nots;
+      my @nots = map _deep($_, qw(term module.version_numified)), @$nots;
       push @version, map "!= $_", @nots;
     }
     else {
