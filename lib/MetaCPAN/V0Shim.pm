@@ -444,7 +444,27 @@ sub redirect {
   };
 }
 
-my $gone = [410, ['Content-Type' => 'text/plain'], ['Gone']];
+my $gone = [410, ['Content-Type' => 'text/html'], [<<'END_HTML']];
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>MetaCPAN v0 API</title>
+        <style type="text/css">
+            body {
+                font-family: sans-serif;
+            }
+        </style>
+        <link rel="shortcut icon" href="https://metacpan.org/static/icons/favicon.ico">
+    </head>
+    <body>
+        <h1>MetaCPAN v0 API has been has been shut down!</h1>
+        <p>
+            See the <a href="https://github.com/metacpan/metacpan-api/blob/master/docs/API-docs.md">MetaCPAN v1 API</a> should be used instead.
+        </p>
+    </body>
+</html>
+
+END_HTML
 
 sub to_app {
   my $self = shift;
