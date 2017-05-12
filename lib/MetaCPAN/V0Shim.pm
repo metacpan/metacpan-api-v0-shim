@@ -35,7 +35,7 @@ my $json = JSON::MaybeXS->new(pretty => 1, utf8 => 1);
 sub json_return {
   my $output = shift;
   my %output = %$output;
-  $output{x_metacpan_shim} = 'metacpan-v0-shim v'.$VERSION.' - see /download_url/ for updated API';
+  $output{x_metacpan_shim} = 'metacpan-v0-shim v'.$VERSION.' - Only supports cpanm 1.7.  See https://github.com/metacpan/metacpan-api/blob/master/docs/API-docs.md for updated API documentation, and the /download_url/ end point for download information';
   my $code = shift || 200;
   [
     $code,
