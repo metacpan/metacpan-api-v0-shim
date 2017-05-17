@@ -128,7 +128,7 @@ sub cpanm_query_to_params {
   my ($self, $search) = @_;
   my $module;
   my @version;
-  my $dev_releases;
+  my $dev_releases = 1;
   if (my $fields = delete $search->{fields}) {
     my @extra = grep !(
       $_ eq 'date'
@@ -171,8 +171,6 @@ sub cpanm_query_to_params {
         die "unsupported filter";
       }
     }
-    $dev_releases = 1
-      if not defined $dev_releases;
   }
 
   my $mod_query = _deep($query, qw(filtered query nested));
