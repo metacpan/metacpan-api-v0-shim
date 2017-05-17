@@ -9,6 +9,7 @@ use HTTP::Tiny;
 use CPAN::DistnameInfo;
 use URI::Escape qw(uri_escape);
 use Moo;
+use WWW::Form::UrlEncoded qw(build_urlencoded);
 
 our $VERSION = '0.001';
 
@@ -233,7 +234,7 @@ sub module_query_url {
   my $module = delete $params->{module};
   my $ua = $self->ua;
   my $url = $self->metacpan_url.'download_url/'.$module
-    .(%$params ? '?'.$ua->www_form_urlencode($params) : '');
+    .(%$params ? '?'.build_urlencoded($params) : '');
   return $url;
 }
 
