@@ -31,7 +31,7 @@ sub _deep {
   $struct;
 }
 
-my $json = JSON::MaybeXS->new(pretty => 1, utf8 => 1);
+my $json = JSON::MaybeXS->new(pretty => 1, utf8 => 1, canonical => 1);
 sub json_return {
   my $output = shift;
   my %output = %$output;
