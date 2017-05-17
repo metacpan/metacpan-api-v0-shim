@@ -33,20 +33,20 @@ sub _deep {
 
 my $json = JSON::MaybeXS->new(pretty => 1, utf8 => 1, canonical => 1);
 sub json_return {
-  my $output = shift;
+  my ($output, $code, $extra) = @_;
   my %output = %$output;
-  $output{x_metacpan_shim} = 'metacpan-v0-shim v'.$VERSION.' - Only supports cpanm 1.7.  See https://github.com/metacpan/metacpan-api/blob/master/docs/API-docs.md for updated API documentation, and the /download_url/ end point for download information';
-  my $code = shift || 200;
+  ${$extra ||= {}}{info} = 'metacpan-api-v0-shim v'.$VERSION.' - Only supports cpanm 1.7.  See https://github.com/metacpan/metacpan-api/blob/master/docs/API-docs.md for updated API documentation, and the /download_url/ end point for download information';
+  $output{x_metacpan_shim} = $extra;
   [
-    $code,
+    $code||200,
     [ 'Content-Type' => 'application/json; charset=utf-8' ],
     [ $json->encode(\%output) ],
   ];
 }
 
 sub search_return {
-  my @items = @_;
-  json_return { hits => { hits => \@items } };
+  my $items = shift;
+  json_return { hits => { hits => $items } }, 200, @_;
 }
 
 =head1 NAME
@@ -227,6 +227,16 @@ sub cpanm_query_to_params {
   };
 }
 
+sub module_query_url {
+  my ($self, $params) = @_;
+  $params = { %$params };
+  my $module = delete $params->{module};
+  my $ua = $self->ua;
+  my $url = $self->metacpan_url.'download_url/'.$module
+    .(%$params ? '?'.$ua->www_form_urlencode($params) : '');
+  return $url;
+}
+
 =head2 module_data
 
 Accepts a query structure as given by cpanm, and returns a hashref of module
@@ -235,11 +245,8 @@ for a found module.
 =cut
 
 sub module_data {
-  my ($self, $params) = @_;
-  my $module = delete $params->{module};
+  my ($self, $module, $url) = @_;
   my $ua = $self->ua;
-  my $url = $self->metacpan_url.'download_url/'.$module
-    .(%$params ? '?'.$ua->www_form_urlencode($params) : '');
   my $response = $ua->get($url);
   if (!$response->{success}) {
     my $error = $response->{content};
@@ -381,12 +388,13 @@ sub file_search {
   my $out = eval {
     my $source = $req->param('source');
     my $params = $self->cpanm_query_to_params($json->decode($source));
-    my $mod_data = $self->module_data($params)
-      or return search_return;
+    my $query_url = $self->module_query_url($params);
+    my $mod_data = $self->module_data($params->{module}, $query_url)
+      or return search_return [], { query => $params, query_url => $query_url };
 
     my $date = $mod_data->{date};
     $date =~ s/Z?\z/Z/;
-    search_return {
+    search_return [{
       _score => 1,
       fields => {
         release => $mod_data->{release},
@@ -400,12 +408,12 @@ sub file_search {
           },
         ],
       },
-    };
+    }], { query => $params, query_url => $query_url };
   };
   if (my $e = $@) {
     my $code = ref $e && $e->{code};
     if ($code && $code == 404) {
-      return search_return;
+      return search_return [];
     }
     return json_return {
       error => $@,
@@ -420,7 +428,7 @@ sub release_search {
   my $out = eval {
     my $source = $req->param('source');
     my $params = $self->cpanm_release_to_params($json->decode($source));
-    search_return map +{ fields => $_ }, $self->release_data($params);
+    search_return [map +{ fields => $_ }, $self->release_data($params)], { query => $params };
   };
   if ($@) {
     return json_return {
