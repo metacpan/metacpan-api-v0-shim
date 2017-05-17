@@ -215,7 +215,7 @@ sub cpanm_query_to_params {
       push @version, map "!= $_", @nots;
     }
     else {
-      die "unsupported filter";
+      die "unsupported filter " . $json->encode($filter);
     }
   }
   if (@version == 1 && $version[0] =~ s/^>=\s*//) {
