@@ -8,3 +8,6 @@ requires 'Starman';
 requires 'Moo';
 requires 'IO::Socket::SSL' => '1.42';
 requires 'Plack::Middleware::SimpleLogger';
+requires 'WWW::Form::UrlEncoded';
+requires 'HTTP::Request::Common';
+requires 'Plack::Test';
