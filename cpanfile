@@ -7,3 +7,4 @@ requires 'URI::Escape';
 requires 'Starman';
 requires 'Moo';
 requires 'IO::Socket::SSL' => '1.42';
+requires 'Plack::Middleware::SimpleLogger';

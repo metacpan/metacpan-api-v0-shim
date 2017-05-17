@@ -470,6 +470,33 @@ END_HTML
 sub to_app {
   my $self = shift;
   builder {
+    enable sub {
+      my $app = shift;
+      sub {
+        my ($env) = @_;
+        my $out = $app->($env);
+        if ($out->[0] >= 500) {
+          my $req = Plack::Request->new($env);
+          my $error = join('', @{$out->[2]});
+          eval { $error = $json->encode($json->decode($error)) };
+          my $params = $req->parameters->as_hashref_mixed;
+          eval { $_ = $json->decode($_) }
+            for values %$params;
+          my $request_data = $json->encode({
+            uri => $req->base . $req->path_info,
+            parameters => $params,
+            user_agent => $req->user_agent,
+          });
+          my $message = "${error}REQUEST: $request_data";
+          $message =~ s/(?<!\A)^/    /gm;
+          $req->logger->({
+            level => 'error',
+            message => $message
+          });
+        }
+        return $out;
+      };
+    };
     mount '/file/_search' => builder {
       sub { $self->file_search(@_) };
     };
