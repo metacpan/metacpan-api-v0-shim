@@ -252,6 +252,9 @@ sub module_data {
   if (!$response->{success}) {
     my $error = $response->{content};
     eval { $error = $json->decode($error) };
+    if (ref $error && $error->{code} == 404) {
+      return;
+    }
     die $error;
   }
   my $data = $json->decode($response->{content});
@@ -413,9 +416,6 @@ sub file_search {
   };
   if (my $e = $@) {
     my $code = ref $e && $e->{code};
-    if ($code && $code == 404) {
-      return search_return [];
-    }
     return json_return {
       error => $@,
     }, $code||500;
