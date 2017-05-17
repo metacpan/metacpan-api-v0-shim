@@ -12,7 +12,7 @@ use Moo;
 
 our $VERSION = '0.001';
 
-has user_agent => (is => 'ro', default => 'metacpan-v0-shim/'.$VERSION);
+has user_agent => (is => 'ro', default => 'metacpan-api-v0-shim/'.$VERSION);
 has ua => (is => 'lazy', default => sub {
   HTTP::Tiny->new(agent => $_[0]->user_agent);
 });
