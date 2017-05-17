@@ -386,7 +386,7 @@ sub file_search {
   my $req = Plack::Request->new($env);
 
   my $out = eval {
-    my $source = $req->param('source');
+    my $source = $req->param('source') or die "no source query specified";
     my $params = $self->cpanm_query_to_params($json->decode($source));
     my $query_url = $self->module_query_url($params);
     my $mod_data = $self->module_data($params->{module}, $query_url)
