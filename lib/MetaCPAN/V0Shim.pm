@@ -136,7 +136,6 @@ sub cpanm_query_to_params {
     my @extra = grep !(
       $_ eq 'date'
       || $_ eq 'release'
-      || $_ eq 'release'
       || $_ eq 'author'
       || $_ eq 'module'
       || $_ eq 'status'
@@ -146,8 +145,8 @@ sub cpanm_query_to_params {
   }
   if (my $sort = delete $search->{sort}) {
     my @extra = grep !(
-      (keys %$_)[0] eq 'date'
-    ), @$sort;
+      $_ eq 'date'
+    ), map keys %$_, @$sort;
     die "unsupported sort fields ".join(", ", @extra)
       if @extra;
   }
