@@ -7,7 +7,7 @@ use Plack::Builder;
 use Plack::Request;
 use HTTP::Tiny;
 use CPAN::DistnameInfo;
-use URI::Escape qw(uri_escape);
+use URI::Escape qw(uri_escape uri_unescape);
 use Moo;
 use WWW::Form::UrlEncoded qw(build_urlencoded);
 
@@ -443,6 +443,18 @@ sub file_search {
   };
 }
 
+sub module_search {
+  my ($self, $env) = @_;
+  my $req = Plack::Request->new($env);
+
+  _json_handler {
+    my $module = $req->path;
+    $module =~ s{^/}{};
+    $module = uri_unescape($module);
+    $self->_module_query({ module => $module });
+  };
+}
+
 sub release_search {
   my ($self, $env) = @_;
   my $req = Plack::Request->new($env);
@@ -523,6 +535,10 @@ sub to_app {
     };
     mount '/file/_search' => builder {
       sub { $self->file_search(@_) };
+    };
+    mount '/module/' => builder {
+      mount '/_search' => sub { $self->file_search(@_) };
+      mount '/' => sub { $self->module_search(@_) };
     };
     mount '/release/_search' => builder {
       sub { $self->release_search(@_) };
