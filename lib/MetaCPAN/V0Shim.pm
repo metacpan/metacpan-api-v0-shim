@@ -393,34 +393,10 @@ sub release_data {
   }, @$hits;
 }
 
-sub file_search {
-  my ($self, $env) = @_;
-  my $req = Plack::Request->new($env);
-
+sub _json_handler (&) {
+  my ($cb) = @_;
   my $out = eval {
-    my $source = $req->param('source') or die "no source query specified";
-    my $params = $self->cpanm_query_to_params($json->decode($source));
-    my $query_url = $self->module_query_url($params);
-    my $mod_data = $self->module_data($params->{module}, $query_url)
-      or return search_return [], { query => $params, query_url => $query_url };
-
-    my $date = $mod_data->{date};
-    $date =~ s/Z?\z/Z/;
-    search_return [{
-      _score => 1,
-      fields => {
-        release => $mod_data->{release},
-        author => $mod_data->{author},
-        date => $date,
-        status => $mod_data->{status},
-        module => [
-          {
-            name => $mod_data->{module},
-            version => $mod_data->{version},
-          },
-        ],
-      },
-    }], { query => $params, query_url => $query_url };
+    return $cb->();
   };
   if (my $e = $@) {
     my $code = ref $e && $e->{code};
@@ -431,20 +407,50 @@ sub file_search {
   $out;
 }
 
+sub _module_query {
+  my ($self, $params) = @_;
+  my $query_url = $self->module_query_url($params);
+  my $mod_data = $self->module_data($params->{module}, $query_url)
+    or return search_return [], { query => $params, query_url => $query_url };
+
+  my $date = $mod_data->{date};
+  $date =~ s/Z?\z/Z/;
+  search_return [{
+    _score => 1,
+    fields => {
+      release => $mod_data->{release},
+      author => $mod_data->{author},
+      date => $date,
+      status => $mod_data->{status},
+      module => [
+        {
+          name => $mod_data->{module},
+          version => $mod_data->{version},
+        },
+      ],
+    },
+  }], { query => $params, query_url => $query_url };
+}
+
+sub file_search {
+  my ($self, $env) = @_;
+  my $req = Plack::Request->new($env);
+
+  _json_handler {
+    my $source = $req->param('source') or die "no source query specified";
+    my $params = $self->cpanm_query_to_params($json->decode($source));
+    $self->_module_query($params);
+  };
+}
+
 sub release_search {
   my ($self, $env) = @_;
   my $req = Plack::Request->new($env);
-  my $out = eval {
+  _json_handler {
     my $source = $req->param('source');
     my $params = $self->cpanm_release_to_params($json->decode($source));
     search_return [map +{ fields => $_ }, $self->release_data($params)], { query => $params };
   };
-  if ($@) {
-    return json_return {
-      error => $@,
-    }, 500;
-  }
-  $out;
 }
 
 sub redirect {
