@@ -140,7 +140,7 @@ sub cpanm_query_to_params {
       || $_ eq 'module'
       || $_ eq 'status'
     ), @$fields;
-    die "unsupported fields ".join(", ", @extra)
+    die { error => "unsupported fields", fields => \@extra }
       if @extra;
   }
   if (my $sort = delete $search->{sort}) {
@@ -148,7 +148,7 @@ sub cpanm_query_to_params {
       $_ eq 'date'
       || $_ eq 'module.version_numified'
     ), map keys %$_, @$sort;
-    die "unsupported sort fields ".join(", ", @extra)
+    die { error => "unsupported sort fields", fields => \@extra }
       if @extra;
   }
 
@@ -255,7 +255,7 @@ sub _parse_module_filters {
       push @version, map "!= $_", @nots;
     }
     else {
-      die "unsupported filter " . $json->encode($filter);
+      die {error => "unsupported filter" , filter => $filter };
     }
   }
   if (@version == 1 && $version[0] =~ s/^>=\s*//) {
@@ -348,7 +348,7 @@ sub cpanm_release_to_params {
       || $_ eq 'stat'
       || $_ eq 'status'
     ), @$fields;
-    die "unsupported fields ".join(", ", @extra)
+    die { error => "unsupported fields", fields => \@extra }
       if @extra;
   }
 
@@ -434,9 +434,8 @@ sub _json_handler (&) {
   };
   if (my $e = $@) {
     my $code = ref $e && $e->{code};
-    return json_return {
-      error => $@,
-    }, $code||500;
+    my $out = (ref $e && $e->{error}) ? $e : { error => $e };
+    return json_return $out, $code || 500;
   }
   $out;
 }
