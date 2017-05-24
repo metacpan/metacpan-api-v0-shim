@@ -18,6 +18,7 @@ has ua => (is => 'lazy', default => sub {
   HTTP::Tiny->new(agent => $_[0]->user_agent);
 });
 has metacpan_url => (is => 'ro', default => 'https://fastapi.metacpan.org/v1/');
+has debug => (is => 'ro', default => $ENV{METACPAN_API_V0_SHIM_DEBUG});
 
 sub _deep {
   my ($struct, @path) = @_;
@@ -485,13 +486,14 @@ END_HTML
 
 sub to_app {
   my $self = shift;
+  my $debug = $self->debug;
   builder {
     enable sub {
       my $app = shift;
       sub {
         my ($env) = @_;
         my $out = $app->($env);
-        if ($out->[0] >= 500) {
+        if ($debug || $out->[0] >= 500) {
           my $req = Plack::Request->new($env);
           my $error = join('', @{$out->[2]});
           eval { $error = $json->encode($json->decode($error)) };
@@ -506,8 +508,8 @@ sub to_app {
           my $message = "${error}REQUEST: $request_data";
           $message =~ s/(?<!\A)^/    /gm;
           $req->logger->({
-            level => 'error',
-            message => $message
+            level => ($out->[0] >= 500 ? 'error' : 'debug'),
+            message => $message,
           });
         }
         return $out;
