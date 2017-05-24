@@ -192,7 +192,21 @@ sub cpanm_query_to_params {
     unless delete $version_query->{metacpan_script} eq 'score_version_numified';
   my $mod_filters = _deep($version_query, qw(query constant_score filter and));
 
-  for my $filter (@$mod_filters) {
+  return $self->_parse_module_filters(
+    $mod_filters,
+    {
+      ($dev_releases ? (dev => 1) : ()),
+    },
+  );
+}
+
+sub _parse_module_filters {
+  my ($self, $filters, $defaults) = @_;
+
+  my $params = { %$defaults };
+  my @version;
+
+  for my $filter (@$filters) {
     if (_deep($filter, qw(term module.authorized))) {
       # should always be present
     }
@@ -200,7 +214,7 @@ sub cpanm_query_to_params {
       # should always be present
     }
     elsif (my $mod = _deep($filter, qw(term module.name))) {
-      $module = $mod;
+      $params->{module} = $mod;
     }
     elsif (my $ver = _deep($filter, qw(term module.version))) {
       @version = ("== $ver");
@@ -229,11 +243,12 @@ sub cpanm_query_to_params {
     pop @version
       if $version[0] =~ /^0(\.0*)$/;
   }
-  {
-    module => $module,
-    (@version ? (version => join ', ', @version) : ()),
-    ($dev_releases ? (dev => 1) : ()),
-  };
+
+  if (@version) {
+    $params->{version} = join ', ', @version;
+  }
+
+  return $params;
 }
 
 sub module_query_url {
