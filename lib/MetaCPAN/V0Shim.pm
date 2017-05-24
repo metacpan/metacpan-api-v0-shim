@@ -129,7 +129,8 @@ sub cpanm_query_to_params {
   my ($self, $search) = @_;
   my $module;
   my @version;
-  my $dev_releases = 1;
+  my $dev_releases;
+
   if (my $fields = delete $search->{fields}) {
     my @extra = grep !(
       $_ eq 'date'
@@ -156,6 +157,7 @@ sub cpanm_query_to_params {
   my $filtered = $query->{filtered}
     or die "not a filtered query";
 
+  my $no_backpan;
   if (my $filters = delete $filtered->{filter}) {
     my $and = _deep($filters, 'and')
       or die "unsupported filter";
@@ -163,6 +165,7 @@ sub cpanm_query_to_params {
       my $status;
       my $maturity;
       if ($status = _deep($filter, qw(not term status)) and $status eq 'backpan') {
+        $no_backpan = 1;
         # will be given for exact version matches
       }
       elsif ($maturity = _deep($filter, qw(term maturity)) and $maturity eq 'released') {
@@ -172,6 +175,10 @@ sub cpanm_query_to_params {
         die "unsupported filter";
       }
     }
+  }
+
+  if (!defined $dev_releases && $no_backpan) {
+    $dev_releases = 1;
   }
 
   my $mod_query = _deep($query, qw(filtered query nested));
