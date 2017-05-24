@@ -146,6 +146,7 @@ sub cpanm_query_to_params {
   if (my $sort = delete $search->{sort}) {
     my @extra = grep !(
       $_ eq 'date'
+      || $_ eq 'module.version_numified'
     ), map keys %$_, @$sort;
     die "unsupported sort fields ".join(", ", @extra)
       if @extra;
@@ -186,7 +187,9 @@ sub cpanm_query_to_params {
       unless $mod_query->{score_mode} && delete $mod_query->{score_mode} eq 'max';
     my $version_query = _deep($mod_query, qw(query custom_score));
     die "unsupported filter"
-      unless delete $version_query->{metacpan_script} eq 'score_version_numified';
+      unless
+        $version_query->{metacpan_script} && delete $version_query->{metacpan_script} eq 'score_version_numified'
+        or $version_query->{script} && delete $version_query->{script} eq "doc['module.version_numified'].value";
     my $mod_filters = _deep($version_query, qw(query constant_score filter and));
 
     return $self->_parse_module_filters(
@@ -195,6 +198,14 @@ sub cpanm_query_to_params {
         ($dev_releases ? (dev => 1) : ()),
       },
     );
+  }
+  elsif (
+    $search->{query}
+      and $search->{query}{match_all}
+      and delete $search->{query}
+      and my $filters = _deep($search, qw(filter and))
+  ) {
+    $self->_parse_module_filters($filters, { dev => 1 });
   }
   die "no query found";
 }
@@ -212,13 +223,22 @@ sub _parse_module_filters {
     elsif (_deep($filter, qw(term module.indexed))) {
       # should always be present
     }
+    elsif (my $maturity = _deep($filter, qw(term maturity))) {
+      if ($maturity eq 'released') {
+        delete $params->{dev};
+      }
+    }
     elsif (my $mod = _deep($filter, qw(term module.name))) {
       $params->{module} = $mod;
     }
     elsif (my $ver = _deep($filter, qw(term module.version))) {
       @version = ("== $ver");
     }
-    elsif (my $range = _deep($filter, qw(range module.version_numified))) {
+    elsif (
+      my $range
+        = _deep($filter, qw(range module.version_numified))
+        // _deep($filter, qw(range module.version))
+    ) {
       for my $cmp (keys %$range) {
         my $ver = $range->{$cmp};
         my %ops = qw(lt < lte <= gt > gte >=);
@@ -228,7 +248,10 @@ sub _parse_module_filters {
       }
     }
     elsif (my $nots = _deep($filter, qw(not or))) {
-      my @nots = map _deep($_, qw(term module.version_numified)), @$nots;
+      my @nots = map +(
+        _deep($_, qw(term module.version_numified))
+        // _deep($_, qw(term module.version))
+      ), @$nots;
       push @version, map "!= $_", @nots;
     }
     else {
@@ -439,6 +462,8 @@ sub _module_query {
           version => $mod_data->{version},
         },
       ],
+      'module.name' => $mod_data->{module},
+      'module.version' => $mod_data->{version},
     },
   }], { query => $params, query_url => $query_url };
 }
