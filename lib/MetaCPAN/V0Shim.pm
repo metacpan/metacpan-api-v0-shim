@@ -219,9 +219,6 @@ sub _parse_module_filters {
     elsif (my $ver = _deep($filter, qw(term module.version))) {
       @version = ("== $ver");
     }
-    elsif (my $ver_num = _deep($filter, qw(term module.version_numified))) {
-      @version = ("== $ver_num");
-    }
     elsif (my $range = _deep($filter, qw(range module.version_numified))) {
       for my $cmp (keys %$range) {
         my $ver = $range->{$cmp};
