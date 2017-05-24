@@ -151,52 +151,52 @@ sub cpanm_query_to_params {
       if @extra;
   }
 
-  my $query = _deep($search, 'query')
-    or die "no query found";
+  if (my $query = _deep($search, 'query')) {
+    my $filtered = $query->{filtered}
+      or die "not a filtered query";
 
-  my $filtered = $query->{filtered}
-    or die "not a filtered query";
-
-  my $no_backpan;
-  if (my $filters = delete $filtered->{filter}) {
-    my $and = _deep($filters, 'and')
-      or die "unsupported filter";
-    for my $filter (@$and) {
-      my $status;
-      my $maturity;
-      if ($status = _deep($filter, qw(not term status)) and $status eq 'backpan') {
-        $no_backpan = 1;
-        # will be given for exact version matches
-      }
-      elsif ($maturity = _deep($filter, qw(term maturity)) and $maturity eq 'released') {
-        $dev_releases = 0;
-      }
-      else {
-        die "unsupported filter";
+    my $no_backpan;
+    if (my $filters = delete $filtered->{filter}) {
+      my $and = _deep($filters, 'and')
+        or die "unsupported filter";
+      for my $filter (@$and) {
+        my $status;
+        my $maturity;
+        if ($status = _deep($filter, qw(not term status)) and $status eq 'backpan') {
+          $no_backpan = 1;
+          # will be given for exact version matches
+        }
+        elsif ($maturity = _deep($filter, qw(term maturity)) and $maturity eq 'released') {
+          $dev_releases = 0;
+        }
+        else {
+          die "unsupported filter";
+        }
       }
     }
+
+    if (!defined $dev_releases && $no_backpan) {
+      $dev_releases = 1;
+    }
+
+    my $mod_query = _deep($query, qw(filtered query nested));
+    die "unsupported filter"
+      unless $mod_query->{path} && delete $mod_query->{path} eq 'module';
+    die "unsupported filter"
+      unless $mod_query->{score_mode} && delete $mod_query->{score_mode} eq 'max';
+    my $version_query = _deep($mod_query, qw(query custom_score));
+    die "unsupported filter"
+      unless delete $version_query->{metacpan_script} eq 'score_version_numified';
+    my $mod_filters = _deep($version_query, qw(query constant_score filter and));
+
+    return $self->_parse_module_filters(
+      $mod_filters,
+      {
+        ($dev_releases ? (dev => 1) : ()),
+      },
+    );
   }
-
-  if (!defined $dev_releases && $no_backpan) {
-    $dev_releases = 1;
-  }
-
-  my $mod_query = _deep($query, qw(filtered query nested));
-  die "unsupported filter"
-    unless $mod_query->{path} && delete $mod_query->{path} eq 'module';
-  die "unsupported filter"
-    unless $mod_query->{score_mode} && delete $mod_query->{score_mode} eq 'max';
-  my $version_query = _deep($mod_query, qw(query custom_score));
-  die "unsupported filter"
-    unless delete $version_query->{metacpan_script} eq 'score_version_numified';
-  my $mod_filters = _deep($version_query, qw(query constant_score filter and));
-
-  return $self->_parse_module_filters(
-    $mod_filters,
-    {
-      ($dev_releases ? (dev => 1) : ()),
-    },
-  );
+  die "no query found";
 }
 
 sub _parse_module_filters {
