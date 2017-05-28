@@ -269,8 +269,11 @@ sub _parse_module_filters {
     my %ops_order = map +($ops_order[$_], $_), 0 .. $#ops_order;
     @version =
       map $_->[0],
-      sort { $a->[1] <=> $b->[1] }
-      map [ $_, $ops_order{(/^([<>]=?|[!=]=)/)[0]} ],
+      sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] }
+      map {
+          /^([<>!=]=?)\s*(.*)/;
+          [ $_, $ops_order{$1}, $2 ],
+      }
       @version;
   }
 
