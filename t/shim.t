@@ -63,7 +63,7 @@ my $res = req('/file/_search', {
                       },
                       {
                         'term' => {
-                          'module.version_numified' => '1.013030',
+                          'module.version' => '1.013030',
                         },
                       },
                     ],
