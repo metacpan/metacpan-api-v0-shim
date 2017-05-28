@@ -502,7 +502,13 @@ sub module_search {
     my $module = $req->path;
     $module =~ s{^/}{};
     $module = uri_unescape($module);
-    $self->_module_query({ module => $module });
+    my $out = $self->_module_query({ module => $module });
+    my $query_url = $self->module_query_url({ module => $module });
+    my $mod_data = $self->module_data($module, $query_url)
+      or return json_return { code => 404 }, 404, { module => $module, query_url => $query_url };
+    json_return {
+      release => $mod_data->{release},
+    }, 200, { module => $module, query_url => $query_url };
   };
 }
 
