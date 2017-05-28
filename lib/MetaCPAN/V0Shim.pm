@@ -128,10 +128,6 @@ accepts.
 
 sub cpanm_query_to_params {
   my ($self, $search) = @_;
-  my $module;
-  my @version;
-  my $dev_releases;
-
   if (my $fields = delete $search->{fields}) {
     my @extra = grep !(
       $_ eq 'date'
@@ -159,34 +155,38 @@ sub cpanm_query_to_params {
   }
 
   if (my $query = _deep($search, 'query')) {
-    my $filtered = $query->{filtered}
-      or die "not a filtered query";
+    my $dev_releases;
+    if (my $filtered = $query->{filtered}) {
+      my $no_backpan;
+      if (my $filters = delete $filtered->{filter}) {
+        my $and = _deep($filters, 'and')
+          or die "unsupported filter";
+        for my $filter (@$and) {
+          my $status;
+          my $maturity;
+          if ($status = _deep($filter, qw(not term status)) and $status eq 'backpan') {
+            $no_backpan = 1;
+            # will be given for exact version matches
+          }
+          elsif ($maturity = _deep($filter, qw(term maturity)) and $maturity eq 'released') {
+            $dev_releases = 0;
+          }
+          else {
+            die "unsupported filter";
+          }
+        }
+      }
 
-    my $no_backpan;
-    if (my $filters = delete $filtered->{filter}) {
-      my $and = _deep($filters, 'and')
-        or die "unsupported filter";
-      for my $filter (@$and) {
-        my $status;
-        my $maturity;
-        if ($status = _deep($filter, qw(not term status)) and $status eq 'backpan') {
-          $no_backpan = 1;
-          # will be given for exact version matches
-        }
-        elsif ($maturity = _deep($filter, qw(term maturity)) and $maturity eq 'released') {
-          $dev_releases = 0;
-        }
-        else {
-          die "unsupported filter";
-        }
+      if (!defined $dev_releases && $no_backpan) {
+        $dev_releases = 1;
       }
     }
 
-    if (!defined $dev_releases && $no_backpan) {
-      $dev_releases = 1;
-    }
+    my $mod_query
+      = _deep($query, qw(filtered query nested))
+      || _deep($query, qw(nested))
+      or die "no nested query";
 
-    my $mod_query = _deep($query, qw(filtered query nested));
     die "unsupported filter"
       unless $mod_query->{path} && delete $mod_query->{path} eq 'module';
     die "unsupported filter"
