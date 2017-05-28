@@ -139,6 +139,8 @@ sub cpanm_query_to_params {
       || $_ eq 'author'
       || $_ eq 'module'
       || $_ eq 'status'
+      || $_ eq 'module.name'
+      || $_ eq 'module.version'
     ), @$fields;
     die { error => "unsupported fields", fields => \@extra }
       if @extra;
@@ -357,6 +359,7 @@ sub cpanm_release_to_params {
          $_ eq 'download_url'
       || $_ eq 'stat'
       || $_ eq 'status'
+      || $_ eq 'version'
     ), @$fields;
     die { error => "unsupported fields", fields => \@extra }
       if @extra;
@@ -413,7 +416,7 @@ sub release_data {
       },
     },
     _source => [ 'stat' ],
-    fields => [ 'download_url', 'status' ],
+    fields => [ 'download_url', 'status', 'version' ],
   };
 
   my $ua = $self->ua;
@@ -434,6 +437,7 @@ sub release_data {
     download_url => $_->{fields}{download_url},
     status => $_->{fields}{status},
     stat => $_->{_source}{stat},
+    version => $_->{fields}{version},
   }, @$hits;
 }
 
