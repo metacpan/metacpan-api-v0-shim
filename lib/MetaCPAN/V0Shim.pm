@@ -160,6 +160,7 @@ sub cpanm_query_to_params {
       my $no_backpan;
       if (my $filters = delete $filtered->{filter}) {
         my $and = _deep($filters, 'and')
+          // (_deep($filters, 'term') && [$filters])
           or die "unsupported filter";
         for my $filter (@$and) {
           my $status;
