@@ -258,9 +258,19 @@ sub _parse_module_filters {
       die {error => "unsupported filter" , filter => $filter };
     }
   }
+
   if (@version == 1 && $version[0] =~ s/^>=\s*//) {
     pop @version
       if $version[0] =~ /^0(\.0*)$/;
+  }
+  elsif (@version > 1) {
+    my @ops_order = qw(>= > == != < <=);
+    my %ops_order = map +($ops_order[$_], $_), 0 .. $#ops_order;
+    @version =
+      map $_->[0],
+      sort { $a->[1] <=> $b->[1] }
+      map [ $_, $ops_order{(/^([<>]=?|[!=]=)/)[0]} ],
+      @version;
   }
 
   if (@version) {
