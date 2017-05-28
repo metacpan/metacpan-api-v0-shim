@@ -149,7 +149,7 @@ sub cpanm_query_to_params {
     my @extra = grep !(
       $_ eq 'date'
       || $_ eq 'module.version_numified'
-    ), map keys %$_, @$sort;
+    ), (ref $sort eq 'HASH' ? keys %$sort : map keys %$_, @$sort);
     die { error => "unsupported sort fields", fields => \@extra }
       if @extra;
   }
