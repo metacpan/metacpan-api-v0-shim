@@ -154,6 +154,10 @@ sub cpanm_query_to_params {
       if @extra;
   }
 
+  if ($search->{query} and $search->{query}{match_all}) {
+    delete $search->{query};
+  }
+
   if (my $query = _deep($search, 'query')) {
     my $filtered = $query->{filtered}
       or die "not a filtered query";
@@ -201,15 +205,10 @@ sub cpanm_query_to_params {
       },
     );
   }
-  elsif (
-    $search->{query}
-      and $search->{query}{match_all}
-      and delete $search->{query}
-      and my $filters = _deep($search, qw(filter and))
-  ) {
-    $self->_parse_module_filters($filters, { dev => 1 });
+  elsif (my $filters = _deep($search, qw(filter and))) {
+    return $self->_parse_module_filters($filters, { dev => 1 });
   }
-  die "no query found";
+  die { error => "no query found", search => $search };
 }
 
 sub _parse_module_filters {
