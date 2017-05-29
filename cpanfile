@@ -11,3 +11,4 @@ requires 'Plack::Middleware::SimpleLogger';
 requires 'WWW::Form::UrlEncoded';
 requires 'HTTP::Request::Common';
 requires 'Plack::Test';
+requires 'LWP::Protocol::PSGI';

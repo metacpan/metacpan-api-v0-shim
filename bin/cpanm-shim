@@ -1,0 +1,40 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+use Getopt::Long qw(:config gnu_getopt pass_through permute);
+
+GetOptions(
+  'cpanm=s'         => \my $cpanm,
+  'disable-metadb!' => \my $disable_metadb,
+  'debug!'          => \my $debug,
+) or die "Error in command line arguments.\n";
+
+if (!defined $cpanm) {
+  $cpanm = `which cpanm`;
+  chomp $cpanm;
+}
+
+die "can't find cpanm!\n"
+  unless $cpanm && -e $cpanm;
+
+my @libs = do {
+  my @incs = `"$^X" -le"print for \@INC"`;
+  chomp @incs;
+  my %inc = map +($_ => 1), @incs;
+  grep !$inc{$_}, 'lib', @INC;
+};
+
+my @opts;
+push @opts, 'disable-metadb'
+  if $disable_metadb;
+push @opts, 'debug'
+  if $debug;
+
+exec
+  "$^X",
+  (map "-I$_", @libs),
+  "-MMetaCPAN::V0Shim::cpanm_hook".(@opts ? '='.join(',', @opts) : ''),
+  $cpanm,
+  @ARGV;
+
