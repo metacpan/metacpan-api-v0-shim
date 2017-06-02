@@ -19,14 +19,46 @@ has ua => (is => 'lazy', default => sub {
   HTTP::Tiny->new(agent => $_[0]->user_agent);
 });
 has metacpan_url => (is => 'ro', default => 'https://fastapi.metacpan.org/v1/');
-has debug => (is => 'ro', default => $ENV{METACPAN_API_V0_SHIM_DEBUG});
 has app => (is => 'lazy');
+
+{
+  package MetaCPAN::V0Shim::Error;
+  use Data::Dumper::Concise ();
+
+  use overload
+    '""' => '_stringify',
+    'bool' => sub () {1},
+    fallback => 1,
+  ;
+
+  sub new {
+    my $class = shift;
+    bless {@_}, $class;
+  }
+
+  sub _stringify {
+    my %out = %{$_[0]};
+    my $error = delete $out{error};
+    my $where = delete $out{where};
+    if (keys %out) {
+      $error .= ': ' . Data::Dumper::Concise::Dumper(\%out);
+      $error =~ s/\n*\z//;
+    }
+    $error .= " at $where\n";
+    $error;
+  }
+
+  sub throw {
+    my $class = shift;
+    die $class->new(@_);
+  }
+}
 
 sub _die {
   my ($message, @extra) = @_;
   my ($package, $filename, $line) = caller;
 
-  die { error => $message, where => "$filename $line", @extra };
+  MetaCPAN::V0Shim::Error->throw(error => $message, where => "$filename $line", @extra);
 }
 
 sub _deep {
