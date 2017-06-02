@@ -490,7 +490,7 @@ sub _json_handler (&) {
   my $out;
   if (!eval { $out = $cb->($context); 1 }) {
     $code = ref $@ && $@->{code} || 500;
-    $out = (ref $@ && $@->{error}) ? $@ : { error => $@ };
+    $out = (ref $@ && $@->{error}) ? { %{ $@ } } : { error => $@ };
   }
 
   $out->{x_metacpan_shim} = $context;
