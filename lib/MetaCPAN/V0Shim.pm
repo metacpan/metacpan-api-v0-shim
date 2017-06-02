@@ -58,7 +58,7 @@ sub _die {
   my ($message, @extra) = @_;
   my ($package, $filename, $line) = caller;
 
-  MetaCPAN::V0Shim::Error->throw(error => $message, where => "$filename $line", @extra);
+  MetaCPAN::V0Shim::Error->throw(error => $message, where => "$filename line $line", @extra);
 }
 
 sub _deep {
