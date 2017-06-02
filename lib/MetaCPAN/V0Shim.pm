@@ -21,10 +21,17 @@ has metacpan_url => (is => 'ro', default => 'https://fastapi.metacpan.org/v1/');
 has debug => (is => 'ro', default => $ENV{METACPAN_API_V0_SHIM_DEBUG});
 has app => (is => 'lazy');
 
+sub _die {
+  my ($message, @extra) = @_;
+  my ($package, $filename, $line) = caller;
+
+  die { error => $message, where => "$filename $line", @extra };
+}
+
 sub _deep {
   my ($struct, @path) = @_;
   while (my $path = @path) {
-    die "invalid query"
+    _die "invalid query", $path
       if ref $struct ne 'HASH' || (keys %$struct) != 1;
     my $path = shift @path;
     return
@@ -127,7 +134,7 @@ sub cpanm_module_query_to_params {
       || $_ eq 'module.name'
       || $_ eq 'module.version'
     ), @$fields;
-    die { error => "unsupported fields", fields => \@extra }
+    _die "unsupported fields", fields => \@extra
       if @extra;
   }
   if (my $sort = delete $search->{sort}) {
@@ -135,7 +142,7 @@ sub cpanm_module_query_to_params {
       $_ eq 'date'
       || $_ eq 'module.version_numified'
     ), (ref $sort eq 'HASH' ? keys %$sort : map keys %$_, @$sort);
-    die { error => "unsupported sort fields", fields => \@extra }
+    _die "unsupported sort fields", fields => \@extra
       if @extra;
   }
 
@@ -150,7 +157,7 @@ sub cpanm_module_query_to_params {
       if (my $filters = delete $filtered->{filter}) {
         my $and = _deep($filters, 'and')
           // (_deep($filters, 'term') && [$filters])
-          or die "unsupported filter";
+          or _die "unsupported filters", filters => $filters;
         for my $filter (@$and) {
           my $status;
           my $maturity;
@@ -162,7 +169,7 @@ sub cpanm_module_query_to_params {
             $dev_releases = 0;
           }
           else {
-            die "unsupported filter";
+            _die "unsupported filter", filters => $filter;
           }
         }
       }
@@ -177,14 +184,14 @@ sub cpanm_module_query_to_params {
     my $mod_query
       = _deep($query, qw(filtered query nested))
       || _deep($query, qw(nested))
-      or die "no nested query";
+      or _die "no nested query", query => $query;
 
-    die "unsupported filter"
+    _die "unsupported filter", query => $mod_query
       unless $mod_query->{path} && delete $mod_query->{path} eq 'module';
-    die "unsupported filter"
+    _die "unsupported filter", query => $mod_query
       unless $mod_query->{score_mode} && delete $mod_query->{score_mode} eq 'max';
     my $version_query = _deep($mod_query, qw(query custom_score));
-    die "unsupported filter"
+    _die "unsupported version filter", query => $version_query
       unless
         $version_query->{metacpan_script} && delete $version_query->{metacpan_script} eq 'score_version_numified'
         or $version_query->{script} && delete $version_query->{script} eq "doc['module.version_numified'].value";
@@ -201,7 +208,7 @@ sub cpanm_module_query_to_params {
   elsif (my $filters = _deep($search, qw(filter and))) {
     return $self->_parse_module_filters($filters, { dev => 1 }, $context);
   }
-  die { error => "no query found", search => $search };
+  _die "no query found", search => $search;
 }
 
 sub _parse_module_filters {
@@ -239,7 +246,7 @@ sub _parse_module_filters {
         my $ver = $range->{$cmp};
         my %ops = qw(lt < lte <= gt > gte >=);
         my $op = $ops{$cmp}
-          or die "unsupported comparison $cmp";
+          or _die "unsupported comparison", op => $cmp;
         push @version, "$op $ver";
       }
     }
@@ -251,7 +258,7 @@ sub _parse_module_filters {
       push @version, map "!= $_", @nots;
     }
     else {
-      die {error => "unsupported filter" , filter => $filter };
+      _die "unsupported filter", filter => $filter;
     }
   }
 
@@ -355,7 +362,7 @@ sub cpanm_release_to_params {
       || $_ eq 'status'
       || $_ eq 'version'
     ), @$fields;
-    die { error => "unsupported fields", fields => \@extra }
+    _die "unsupported fields", fields => \@extra
       if @extra;
   }
 
@@ -374,7 +381,7 @@ sub cpanm_release_to_params {
         $author = $au;
       }
       else {
-        die "unsupported query";
+        _die "unsupported query", filter => $filter;
       }
     }
   }
@@ -383,7 +390,7 @@ sub cpanm_release_to_params {
     $release = $rel;
   }
   else {
-    die "no query found";
+    _die "unsupported query", query => $search;
   }
 
   {
