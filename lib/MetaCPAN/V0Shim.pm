@@ -34,21 +34,9 @@ sub _deep {
 }
 
 my $json = JSON::MaybeXS->new(pretty => 1, utf8 => 1, canonical => 1);
-sub json_return {
-  my ($output, $code, $extra) = @_;
-  my %output = %$output;
-  ${$extra ||= {}}{info} = 'metacpan-api-v0-shim v'.$VERSION.' - Only supports cpanm 1.7.  See https://github.com/metacpan/metacpan-api/blob/master/docs/API-docs.md for updated API documentation, and the /download_url/ end point for download information';
-  $output{x_metacpan_shim} = $extra;
-  [
-    $code||200,
-    [ 'Content-Type' => 'application/json; charset=utf-8' ],
-    [ $json->encode(\%output) ],
-  ];
-}
 
 sub search_return {
-  my $items = shift;
-  json_return { hits => { hits => $items } }, 200, @_;
+  { hits => { hits => $_[0] } };
 }
 
 =head1 NAME
@@ -127,7 +115,7 @@ accepts.
 =cut
 
 sub cpanm_module_query_to_params {
-  my ($self, $search) = @_;
+  my ($self, $search, $context) = @_;
   if (my $fields = delete $search->{fields}) {
     my @extra = grep !(
       $_ eq 'date'
@@ -182,6 +170,8 @@ sub cpanm_module_query_to_params {
         $dev_releases = 1;
       }
     }
+    $context->{query}{dev} = 1
+      if $dev_releases;
 
     my $mod_query
       = _deep($query, qw(filtered query nested))
@@ -204,19 +194,21 @@ sub cpanm_module_query_to_params {
       {
         ($dev_releases ? (dev => 1) : ()),
       },
+      $context,
     );
   }
   elsif (my $filters = _deep($search, qw(filter and))) {
-    return $self->_parse_module_filters($filters, { dev => 1 });
+    return $self->_parse_module_filters($filters, { dev => 1 }, $context);
   }
   die { error => "no query found", search => $search };
 }
 
 sub _parse_module_filters {
-  my ($self, $filters, $defaults) = @_;
+  my ($self, $filters, $defaults, $context) = @_;
 
   my $params = { %$defaults };
   my @version;
+  $context->{query}{versions} = \@version;
 
   for my $filter (@$filters) {
     if (_deep($filter, qw(term module.authorized))) {
@@ -232,6 +224,7 @@ sub _parse_module_filters {
     }
     elsif (my $mod = _deep($filter, qw(term module.name))) {
       $params->{module} = $mod;
+      $context->{query}{module} = $mod;
     }
     elsif (my $ver = _deep($filter, qw(term module.version))) {
       @version = ("== $ver");
@@ -285,16 +278,6 @@ sub _parse_module_filters {
   return $params;
 }
 
-sub module_query_url {
-  my ($self, $params) = @_;
-  $params = { %$params };
-  my $module = delete $params->{module};
-  my $ua = $self->ua;
-  my $url = $self->metacpan_url.'download_url/'.$module
-    .(%$params ? '?'.build_urlencoded($params) : '');
-  return $url;
-}
-
 =head2 module_data
 
 Accepts a query structure as given by cpanm, and returns a hashref of module
@@ -303,9 +286,16 @@ for a found module.
 =cut
 
 sub module_data {
-  my ($self, $module, $url) = @_;
+  my ($self, $params, $context) = @_;
+  $params = { %$params };
+  my $module = delete $params->{module};
   my $ua = $self->ua;
-  my $response = $ua->get($url);
+  my $url = $self->metacpan_url.'download_url/'.$module
+    .(%$params ? '?'.build_urlencoded($params) : '');
+
+  $context->{query_url} = $url;
+
+  my $response = $self->ua->get($url);
   if (!$response->{success}) {
     my $error = $response->{content};
     eval { $error = $json->decode($error) };
@@ -356,7 +346,7 @@ The return value will be a hashref with release and author.
 =cut
 
 sub cpanm_release_to_params {
-  my ($self, $search) = @_;
+  my ($self, $search, $context) = @_;
   if (my $fields = delete $search->{fields}) {
     my @extra = grep !(
          $_ eq 'download_url'
@@ -375,9 +365,11 @@ sub cpanm_release_to_params {
   if (my $filters = _deep($search, qw(filter and))) {
     for my $filter (@$filters) {
       if (my $rel = _deep($filter, qw(term release.name))) {
+        $context->{query}{release} = $rel;
         $release = $rel;
       }
       elsif (my $au = _deep($filter, qw(term release.author))) {
+        $context->{query}{author} = $au;
         $author = $au;
       }
       else {
@@ -386,6 +378,7 @@ sub cpanm_release_to_params {
     }
   }
   elsif (my $rel = _deep($search, qw(filter term release.name))) {
+    $context->{query}{release} = $rel;
     $release = $rel;
   }
   else {
@@ -408,7 +401,7 @@ Returned hashrefs will include download_url, stat, and status.
 =cut
 
 sub release_data {
-  my ($self, $params) = @_;
+  my ($self, $params, $context) = @_;
   my $query = {
     filter => {
       bool => {
@@ -446,22 +439,29 @@ sub release_data {
 
 sub _json_handler (&) {
   my ($cb) = @_;
-  my $out = eval {
-    return $cb->();
+  my $context = {
+    info => 'metacpan-api-v0-shim v'.$VERSION.' - Only supports cpanm 1.7.  See https://github.com/metacpan/metacpan-api/blob/master/docs/API-docs.md for updated API documentation, and the /download_url/ end point for download information',
   };
-  if (my $e = $@) {
-    my $code = ref $e && $e->{code};
-    my $out = (ref $e && $e->{error}) ? $e : { error => $e };
-    return json_return $out, $code || 500;
+  my $code = 200;
+
+  my $out;
+  if (!eval { $out = $cb->($context); 1 }) {
+    $code = ref $@ && $@->{code} || 500;
+    $out = (ref $@ && $@->{error}) ? $@ : { error => $@ };
   }
-  $out;
+
+  $out->{x_metacpan_shim} = $context;
+  [
+    $code,
+    [ 'Content-Type' => 'application/json; charset=utf-8' ],
+    [ $json->encode($out) ],
+  ];
 }
 
 sub _module_query {
-  my ($self, $params) = @_;
-  my $query_url = $self->module_query_url($params);
-  my $mod_data = $self->module_data($params->{module}, $query_url)
-    or return search_return [], { query => $params, query_url => $query_url };
+  my ($self, $params, $context) = @_;
+  my $mod_data = $self->module_data($params, $context)
+    or return search_return [];
 
   my $date = $mod_data->{date};
   $date =~ s/Z?\z/Z/;
@@ -481,7 +481,7 @@ sub _module_query {
       'module.name' => $mod_data->{module},
       'module.version' => $mod_data->{version},
     },
-  }], { query => $params, query_url => $query_url };
+  }];
 }
 
 sub file_search {
@@ -489,9 +489,10 @@ sub file_search {
   my $req = Plack::Request->new($env);
 
   _json_handler {
+    my $context = shift;
     my $source = $req->param('source') or die "no source query specified";
-    my $params = $self->cpanm_module_query_to_params($json->decode($source));
-    $self->_module_query($params);
+    my $params = $self->cpanm_module_query_to_params($json->decode($source), $context);
+    $self->_module_query($params, $context);
   };
 }
 
@@ -500,16 +501,16 @@ sub module_search {
   my $req = Plack::Request->new($env);
 
   _json_handler {
+    my $context = shift;
     my $module = $req->path;
     $module =~ s{^/}{};
     $module = uri_unescape($module);
-    my $out = $self->_module_query({ module => $module });
-    my $query_url = $self->module_query_url({ module => $module });
-    my $mod_data = $self->module_data($module, $query_url)
-      or return json_return { code => 404 }, 404, { module => $module, query_url => $query_url };
-    json_return {
+    $context->{module} = $module;
+    my $mod_data = $self->module_data({ module => $module }, $context)
+      or die { code => 404 };
+    return {
       release => $mod_data->{release},
-    }, 200, { module => $module, query_url => $query_url };
+    };
   };
 }
 
@@ -517,9 +518,11 @@ sub release_search {
   my ($self, $env) = @_;
   my $req = Plack::Request->new($env);
   _json_handler {
+    my $context = shift;
     my $source = $req->param('source');
-    my $params = $self->cpanm_release_to_params($json->decode($source));
-    search_return [map +{ fields => $_ }, $self->release_data($params)], { query => $params };
+    my $params = $self->cpanm_release_to_params($json->decode($source), $context);
+    my @releases = $self->release_data($params, $context);
+    search_return [map +{ fields => $_ }, @releases];
   };
 }
 
