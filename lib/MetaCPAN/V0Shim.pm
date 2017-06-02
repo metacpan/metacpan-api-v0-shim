@@ -603,16 +603,12 @@ sub _build_app {
         return $out;
       };
     };
-    mount '/file/_search' => builder {
-      sub { $self->file_search(@_) };
-    };
+    mount '/file/_search' => sub { $self->file_search(@_) };
     mount '/module/' => builder {
       mount '/_search' => sub { $self->file_search(@_) };
       mount '/' => sub { $self->module_search(@_) };
     };
-    mount '/release/_search' => builder {
-      sub { $self->release_search(@_) };
-    };
+    mount '/release/_search' => sub { $self->release_search(@_) };
     mount '/pod' => $self->redirect('pod');
     mount '/source' => $self->redirect('source');
     mount '/' => sub { $gone };
