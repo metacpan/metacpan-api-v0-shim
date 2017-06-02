@@ -262,9 +262,10 @@ sub _parse_module_filters {
     }
   }
 
-  if (@version == 1 && $version[0] =~ s/^>=\s*//) {
-    pop @version
-      if $version[0] =~ /^0(\.0*)$/;
+  @version = grep !/^(?:>=\s*)?0(?:\.0+)$/, @version;
+
+  if (@version == 1) {
+    $version[0] =~ s/^(?:>=\s*)?//;
   }
   elsif (@version > 1) {
     my @ops_order = qw(>= > == != < <=);
