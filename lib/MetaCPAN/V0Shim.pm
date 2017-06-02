@@ -317,7 +317,7 @@ sub _parse_module_filters {
     $params->{version} = join ', ', @version;
   }
 
-  Dlog_debug { "query: $_" } $params;
+  Dlog_info { "module query: $_" } $params;
   return $params;
 }
 
@@ -355,7 +355,7 @@ sub module_data {
   my $info = CPAN::DistnameInfo->new($path);
   my $author = $info->cpanid;
   my $release = $info->distvname;
-  return {
+  DlogS_info { "result: $_" } {
     release => $release,
     author => $author,
     date => $data->{date},
@@ -428,7 +428,7 @@ sub cpanm_release_to_params {
     _die "unsupported query", query => $search;
   }
 
-  {
+  DlogS_info { "release query: $_" } {
     release => $release,
     (defined $author ? (author => $author) : ()),
   };
@@ -472,7 +472,7 @@ sub release_data {
   my $data = $json->decode($response->{content});
   my $hits = $data->{hits}{hits} || die $data;
 
-  map +{
+  Dlog_info { "result: $_" } map +{
     download_url => $_->{fields}{download_url},
     status => $_->{fields}{status},
     stat => $_->{_source}{stat},
@@ -614,17 +614,16 @@ sub _build_app {
       sub {
         my ($env) = @_;
         my $req = Plack::Request->new($env);
-        log_debug { "REQUEST: " . $req->base . $req->path_info };
+        log_debug { "REQUEST: " . $req->base . $req->path_info . "  AGENT: " . $req->user_agent };
         log_debug {
           my $params = $req->parameters->as_hashref_mixed;
           eval { $_ = $json->decode($_) }
             for values %$params;
           "PARAMETERS: ". $json->encode($params);
         };
-        log_debug { "AGENT: " . $req->user_agent };
         my $out = $app->($env);
         if ($out->[0] >= 500) {
-          log_error { join('', @{$out->[2]}) };
+          log_error { $out->[0] . ': ' . join('', @{$out->[2]}) };
         }
         return $out;
       };
