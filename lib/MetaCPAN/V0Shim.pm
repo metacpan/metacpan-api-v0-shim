@@ -62,7 +62,7 @@ into C</download_url/> calls.
 
 =head1 FUNCTIONS
 
-=head2 cpanm_query_to_params
+=head2 cpanm_module_query_to_params
 
 Converts a module query from cpanm to parameters to use in the download_url
 endpoint.
@@ -126,7 +126,7 @@ accepts.
 
 =cut
 
-sub cpanm_query_to_params {
+sub cpanm_module_query_to_params {
   my ($self, $search) = @_;
   if (my $fields = delete $search->{fields}) {
     my @extra = grep !(
@@ -490,7 +490,7 @@ sub file_search {
 
   _json_handler {
     my $source = $req->param('source') or die "no source query specified";
-    my $params = $self->cpanm_query_to_params($json->decode($source));
+    my $params = $self->cpanm_module_query_to_params($json->decode($source));
     $self->_module_query($params);
   };
 }

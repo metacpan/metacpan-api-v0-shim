@@ -5,7 +5,7 @@ use MetaCPAN::V0Shim;
 
 my $shim = MetaCPAN::V0Shim->new;
 
-is_deeply $shim->cpanm_query_to_params({
+is_deeply $shim->cpanm_module_query_to_params({
   'fields' => [
     'date',
     'release',
@@ -45,7 +45,7 @@ is_deeply $shim->cpanm_query_to_params({
   version => '== 1.013030',
 }, 'explicit version';
 
-is_deeply $shim->cpanm_query_to_params({
+is_deeply $shim->cpanm_module_query_to_params({
   'fields' => [
     'date',
     'release',
@@ -93,7 +93,7 @@ is_deeply $shim->cpanm_query_to_params({
 }, 'version range';
 
 
-is_deeply $shim->cpanm_query_to_params({
+is_deeply $shim->cpanm_module_query_to_params({
   'fields' => [
     'date',
     'release',
