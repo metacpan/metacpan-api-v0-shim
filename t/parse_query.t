@@ -2,6 +2,10 @@ use strict;
 use warnings;
 use Test::More;
 use MetaCPAN::V0Shim;
+use Log::Contextual qw(set_logger);
+use Log::Contextual::SimpleLogger;
+
+set_logger +Log::Contextual::SimpleLogger->new({levels_upto => 'warn'});
 
 my $shim = MetaCPAN::V0Shim->new;
 

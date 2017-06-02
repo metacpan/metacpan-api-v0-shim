@@ -10,6 +10,7 @@ use CPAN::DistnameInfo;
 use URI::Escape qw(uri_escape uri_unescape);
 use Moo;
 use WWW::Form::UrlEncoded qw(build_urlencoded);
+use Log::Contextual::Easy::Default;
 
 our $VERSION = '0.001';
 
@@ -284,6 +285,7 @@ sub _parse_module_filters {
     $params->{version} = join ', ', @version;
   }
 
+  Dlog_debug { "query: $_" } $params;
   return $params;
 }
 
@@ -574,31 +576,23 @@ END_HTML
 
 sub _build_app {
   my $self = shift;
-  my $debug = $self->debug;
   builder {
     enable sub {
       my $app = shift;
       sub {
         my ($env) = @_;
-        my $out = $app->($env);
-        if ($debug || $out->[0] >= 500) {
-          my $req = Plack::Request->new($env);
-          my $error = join('', @{$out->[2]});
-          eval { $error = $json->encode($json->decode($error)) };
+        my $req = Plack::Request->new($env);
+        log_debug { "REQUEST: " . $req->base . $req->path_info };
+        log_debug {
           my $params = $req->parameters->as_hashref_mixed;
           eval { $_ = $json->decode($_) }
             for values %$params;
-          my $request_data = $json->encode({
-            uri => $req->base . $req->path_info,
-            parameters => $params,
-            user_agent => $req->user_agent,
-          });
-          my $message = "${error}REQUEST: $request_data";
-          $message =~ s/(?<!\A)^/    /gm;
-          $req->logger->({
-            level => ($out->[0] >= 500 ? 'error' : 'debug'),
-            message => $message,
-          });
+          "PARAMETERS: ". $json->encode($params);
+        };
+        log_debug { "AGENT: " . $req->user_agent };
+        my $out = $app->($env);
+        if ($out->[0] >= 500) {
+          log_error { join('', @{$out->[2]}) };
         }
         return $out;
       };

@@ -5,7 +5,8 @@ use Plack::Builder;
 
 my $app = MetaCPAN::V0Shim->new->app;
 builder {
-  enable 'SimpleLogger', level => 'debug';
+  enable 'SimpleLogger', level => 'warn';
+  enable 'Log::Contextual', level => 'warn';
   mount '/v0' => $app;
   mount '/' => $app;
 };

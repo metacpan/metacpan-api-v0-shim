@@ -12,28 +12,23 @@ my @hooks;
 sub import {
   my ($class, @opts) = @_;
   my %opts = map +($_ => 1), @opts;
-  my $shim = MetaCPAN::V0Shim->new(
-    ($opts{debug} ? (debug => 1) : ()),
-  )->app;
 
-  $shim = builder {
-    if ($opts{debug}) {
-      enable sub {
-        my $app = shift;
-        return sub {
-          my ($env) = @_;
-          $env->{'psgi.errors'} = \*STDERR;
-          $app->($env);
-        };
-      };
-    }
-    enable 'SimpleLogger', level => 'debug';
-    mount '/v0' => $shim;
-    mount '/' => $shim;
+  my $shim = MetaCPAN::V0Shim->new;
+
+  my $shim_app = builder {
+    enable 'Log::Contextual', (
+      level => 'debug',
+      logger => Log::Contextual::SimpleLogger->new({
+        (levels_upto => $opts{debug} ? 'debug' : 'warn'),
+      }),
+    );
+    mount '/v0' => $shim->app;
+    mount '/' => $shim->app;
   };
-  push @hooks, LWP::Protocol::PSGI->register($shim, host => 'api.metacpan.org');
+  push @hooks, LWP::Protocol::PSGI->register($shim_app, host => 'api.metacpan.org');
   if ($opts{'disable-metadb'}) {
-    push @hooks, LWP::Protocol::PSGI->register(sub { [500, [], [''] ] }, host => 'cpanmetadb.plackperl.org');
+    my $blocked = sub { [ 500, [], [''] ] };
+    push @hooks, LWP::Protocol::PSGI->register($blocked, host => 'cpanmetadb.plackperl.org');
   }
 }
 
