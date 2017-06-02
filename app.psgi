@@ -3,7 +3,7 @@ use warnings;
 use MetaCPAN::V0Shim;
 use Plack::Builder;
 
-my $app = MetaCPAN::V0Shim->new->to_app;
+my $app = MetaCPAN::V0Shim->new->app;
 builder {
   enable 'SimpleLogger', level => 'debug';
   mount '/v0' => $app;

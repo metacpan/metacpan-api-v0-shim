@@ -8,7 +8,7 @@ use JSON::MaybeXS;
 use WWW::Form::UrlEncoded qw(build_urlencoded parse_urlencoded);
 
 my $json = JSON::MaybeXS->new(utf8 => 1, canonical => 1);
-my $app = MetaCPAN::V0Shim->new->to_app;
+my $app = MetaCPAN::V0Shim->new->app;
 {
   my $wrap_app = $app;
   $app = sub {

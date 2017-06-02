@@ -5,6 +5,7 @@ use warnings;
 use LWP::Protocol::PSGI;
 use MetaCPAN::V0Shim;
 use Plack::Builder;
+use Log::Contextual::SimpleLogger;
 
 my @hooks;
 
@@ -13,7 +14,7 @@ sub import {
   my %opts = map +($_ => 1), @opts;
   my $shim = MetaCPAN::V0Shim->new(
     ($opts{debug} ? (debug => 1) : ()),
-  )->to_app;
+  )->app;
 
   $shim = builder {
     if ($opts{debug}) {

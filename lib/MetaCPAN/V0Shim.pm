@@ -19,6 +19,7 @@ has ua => (is => 'lazy', default => sub {
 });
 has metacpan_url => (is => 'ro', default => 'https://fastapi.metacpan.org/v1/');
 has debug => (is => 'ro', default => $ENV{METACPAN_API_V0_SHIM_DEBUG});
+has app => (is => 'lazy');
 
 sub _deep {
   my ($struct, @path) = @_;
@@ -563,7 +564,7 @@ my $gone = [410, ['Content-Type' => 'text/html'], [<<'END_HTML']];
 
 END_HTML
 
-sub to_app {
+sub _build_app {
   my $self = shift;
   my $debug = $self->debug;
   builder {
