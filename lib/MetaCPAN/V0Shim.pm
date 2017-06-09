@@ -30,16 +30,17 @@ sub search_return {
   { hits => { hits => $_[0] } };
 }
 
-sub module_data {
-  my ($self, $params, $context) = @_;
+sub module_query_url {
+  my ($self, $params) = @_;
   $params = { %$params };
   my $module = delete $params->{module};
-  my $ua = $self->ua;
-  my $url = $self->metacpan_url.'download_url/'.$module
+  return $self->metacpan_url.'download_url/'.$module
     .(%$params ? '?'.build_urlencoded($params) : '');
+}
 
-  $context->{query_url} = $url;
-
+sub module_data {
+  my ($self, $params) = @_;
+  my $url = $self->module_query_url($params);
   my $response = $self->ua->get($url);
   if (!$response->{success}) {
     my $error = $response->{content};
@@ -62,16 +63,14 @@ sub module_data {
     author => $author,
     date => $data->{date},
     status => $data->{status},
-    module => $module,
+    module => $params->{module},
     version => $data->{version},
     download_url => $data->{download_url},
   };
 }
 
-
-
 sub release_data {
-  my ($self, $params, $context) = @_;
+  my ($self, $params) = @_;
   my $query = {
     filter => {
       bool => {
@@ -129,8 +128,8 @@ sub _json_handler (&) {
 }
 
 sub _module_query {
-  my ($self, $params, $context) = @_;
-  my $mod_data = $self->module_data($params, $context)
+  my ($self, $params) = @_;
+  my $mod_data = $self->module_data($params)
     or return search_return [];
 
   my $date = $mod_data->{date};
@@ -165,7 +164,8 @@ sub file_search {
     my $params = parse_module_query($query);
 
     $context->{query} = $params;
-    $self->_module_query($params, $context);
+    $context->{query_url} = $self->module_query_url($params);
+    $self->_module_query($params);
   };
 }
 
@@ -178,8 +178,12 @@ sub module_search {
     my $module = $req->path;
     $module =~ s{^/}{};
     $module = uri_unescape($module);
-    $context->{module} = $module;
-    my $mod_data = $self->module_data({ module => $module }, $context)
+    my $params = {
+      module => $module,
+    };
+    $context->{query} = $params;
+    $context->{query_url} = $self->module_query_url($params);
+    my $mod_data = $self->module_data($params)
       or die { code => 404 };
     return {
       release => $mod_data->{release},
@@ -195,7 +199,7 @@ sub release_search {
     my $source = $req->param('source');
     my $params = parse_release_query($json->decode($source));
     $context->{query} = $params;
-    my @releases = $self->release_data($params, $context);
+    my @releases = $self->release_data($params);
     search_return [map +{ fields => $_ }, @releases];
   };
 }
