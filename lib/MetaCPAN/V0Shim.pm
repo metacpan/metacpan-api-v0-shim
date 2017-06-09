@@ -7,13 +7,14 @@ use Plack::Builder;
 use Plack::Request;
 use HTTP::Tiny;
 use CPAN::DistnameInfo;
-use Moo;
 use WWW::Form::UrlEncoded qw(build_urlencoded);
 use URL::Encode qw(url_decode url_encode);
 use Log::Contextual::Easy::Default;
 
 use MetaCPAN::V0Shim::Error;
 use MetaCPAN::V0Shim::Parser;
+
+use Moo;
 
 our $VERSION = '0.001';
 
