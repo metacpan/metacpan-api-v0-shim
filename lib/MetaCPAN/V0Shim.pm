@@ -6,6 +6,7 @@ use JSON::MaybeXS;
 use Plack::Builder;
 use Plack::Request;
 use HTTP::Tiny;
+use Plack::Util;
 use CPAN::DistnameInfo;
 use WWW::Form::UrlEncoded qw(build_urlencoded);
 use URL::Encode qw(url_decode url_encode);
@@ -242,28 +243,31 @@ my $gone = [410, ['Content-Type' => 'text/html'], [<<'END_HTML']];
 
 END_HTML
 
+sub log_wrap {
+  my ($self, $app) = @_;
+  sub {
+    my ($env) = @_;
+    my $req = Plack::Request->new($env);
+    log_debug { "REQUEST: " . $req->base . $req->path_info . "  AGENT: " . $req->user_agent };
+    log_debug {
+      my $params = $req->parameters->as_hashref_mixed;
+      eval { $_ = $json->decode($_) }
+        for values %$params;
+      "PARAMETERS: ". $json->encode($params);
+    };
+    return Plack::Util::response_cb($app->($env), sub {
+      my $res = shift;
+      if ($res->[0] >= 500) {
+        log_error { $res->[0] . ': ' . join('', @{$res->[2]}) };
+      }
+    });
+  };
+}
+
 sub _build_app {
   my $self = shift;
   builder {
-    enable sub {
-      my $app = shift;
-      sub {
-        my ($env) = @_;
-        my $req = Plack::Request->new($env);
-        log_debug { "REQUEST: " . $req->base . $req->path_info . "  AGENT: " . $req->user_agent };
-        log_debug {
-          my $params = $req->parameters->as_hashref_mixed;
-          eval { $_ = $json->decode($_) }
-            for values %$params;
-          "PARAMETERS: ". $json->encode($params);
-        };
-        my $out = $app->($env);
-        if ($out->[0] >= 500) {
-          log_error { $out->[0] . ': ' . join('', @{$out->[2]}) };
-        }
-        return $out;
-      };
-    };
+    enable sub { $self->log_wrap(@_) };
     mount '/file/_search' => sub { $self->file_search(@_) };
     mount '/module/' => builder {
       mount '/_search' => sub { $self->file_search(@_) };
