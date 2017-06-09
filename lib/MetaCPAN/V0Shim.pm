@@ -25,6 +25,12 @@ our $VERSION = '0.001';
 
 has user_agent => (is => 'ro', default => 'metacpan-api-v0-shim/'.$VERSION);
 has loop => (is => 'lazy', default => sub { IO::Async::Loop->new });
+has notifier => (is => 'lazy', default => sub {
+  my $self = shift;
+  my $notifier = IO::Async::Notifier->new;
+  $self->loop->add($notifier);
+  return $notifier;
+});
 has ua => (is => 'lazy', default => sub {
   my $self = shift;
   my $http = Net::Async::HTTP->new(
@@ -129,8 +135,9 @@ sub release_data {
   });
 }
 
-sub _json_handler (&) {
-  my ($cb) = @_;
+sub _json_handler {
+  my ($self, $env, $cb) = @_;
+
   my $context = {
     info => (<<"END_INFO" =~ s{\n}{ }r),
 metacpan-api-v0-shim v$VERSION - Only supports cpanm 1.7.
@@ -168,8 +175,12 @@ END_INFO
       $responder->(@_);
       Future->done;
     })->else_done;
+    $self->notifier->adopt_future($future);
     $future->get
+      unless $env->{'psgi.nonblocking'};
   };
+  return $delayed
+    if $env->{'psgi.streaming'};
   my $out;
   $delayed->(sub { $out = $_[0] });
   return $out;
@@ -179,7 +190,7 @@ sub file_search {
   my ($self, $env) = @_;
   my $req = Plack::Request->new($env);
 
-  _json_handler {
+  $self->_json_handler($env, sub {
     my $context = shift;
     my $source = $req->param('source') or _die "no source query specified";
     my $query = $json->decode($source);
@@ -214,7 +225,7 @@ sub module_search {
   my ($self, $env) = @_;
   my $req = Plack::Request->new($env);
 
-  _json_handler {
+  $self->_json_handler($env, sub {
     my $context = shift;
     my $module = $req->path;
     $module =~ s{^/}{};

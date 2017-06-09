@@ -5,7 +5,6 @@ use warnings;
 use LWP::Protocol::PSGI;
 use MetaCPAN::V0Shim;
 use Plack::Builder;
-use Log::Contextual::SimpleLogger;
 
 my @hooks;
 
@@ -16,12 +15,6 @@ sub import {
   my $shim = MetaCPAN::V0Shim->new;
 
   my $shim_app = builder {
-    enable 'Log::Contextual', (
-      level => 'debug',
-      logger => Log::Contextual::SimpleLogger->new({
-        (levels_upto => $opts{debug} ? 'debug' : 'warn'),
-      }),
-    );
     mount '/v0' => $shim->app;
     mount '/' => $shim->app;
   };
