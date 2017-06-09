@@ -70,23 +70,30 @@ my $decode = sub {
 sub module_data {
   my ($self, $params) = @_;
   my $url = $self->module_query_url($params);
-  my $data = $self->ua->GET($url)->then($decode)->get;
-  if (!$data->{download_url}) {
-    return;
-  }
-  (my $path = $data->{download_url}) =~ s{.*/authors/}{authors/};
-  my $info = CPAN::DistnameInfo->new($path);
-  my $author = $info->cpanid;
-  my $release = $info->distvname;
-  DlogS_info { "result: $_" } {
-    release => $release,
-    author => $author,
-    date => $data->{date},
-    status => $data->{status},
-    module => $params->{module},
-    version => $data->{version},
-    download_url => $data->{download_url},
-  };
+
+  $self->ua->GET($url)->then($decode)->then(sub {
+    my $data = shift || return Future->done;
+    if (!$data->{download_url}) {
+      return;
+    }
+    my $path = $data->{download_url} =~ s{.*/authors/}{authors/}r;
+    my $info = CPAN::DistnameInfo->new($path);
+    my $author = $info->cpanid;
+    my $release = $info->distvname;
+    my $date = $data->{date};
+    $date =~ s/Z?\z/Z/;
+    my $result = {
+      release => $release,
+      author => $author,
+      date => $date,
+      status => $data->{status},
+      module => $params->{module},
+      version => $data->{version},
+      download_url => $data->{download_url},
+    };
+    DlogS_info { "result: $_" } $result;
+    Future->done($result);
+  });
 }
 
 sub release_data {
@@ -104,19 +111,22 @@ sub release_data {
     fields => [ 'download_url', 'status', 'version' ],
   };
 
-  my $data = $self->ua->POST(
+  $self->ua->POST(
     $self->metacpan_url.'release/_search',
     $json->encode($query),
     content_type => 'application/json; charset=utf-8',
-  )->then($decode)->get;
-  my $hits = $data->{hits}{hits} || die $data;
-
-  Dlog_info { "result: $_" } map +{
-    download_url => $_->{fields}{download_url},
-    status => $_->{fields}{status},
-    stat => $_->{_source}{stat},
-    version => $_->{fields}{version},
-  }, @$hits;
+  )->then($decode)->then(sub {
+    my $data = shift;
+    my $hits = $data->{hits}{hits} or die $data;
+    Future->done(
+      Dlog_info { "result: $_" } map +{
+        download_url => $_->{fields}{download_url},
+        status => $_->{fields}{status},
+        stat => $_->{_source}{stat},
+        version => $_->{fields}{version},
+      }, @$hits
+    );
+  });
 }
 
 sub _json_handler (&) {
@@ -154,32 +164,6 @@ END_INFO
   })->get;
 }
 
-sub _module_query {
-  my ($self, $params) = @_;
-  my $mod_data = $self->module_data($params)
-    or return search_return [];
-
-  my $date = $mod_data->{date};
-  $date =~ s/Z?\z/Z/;
-  search_return [{
-    _score => 1,
-    fields => {
-      release => $mod_data->{release},
-      author => $mod_data->{author},
-      date => $date,
-      status => $mod_data->{status},
-      module => [
-        {
-          name => $mod_data->{module},
-          version => $mod_data->{version},
-        },
-      ],
-      'module.name' => $mod_data->{module},
-      'module.version' => $mod_data->{version},
-    },
-  }];
-}
-
 sub file_search {
   my ($self, $env) = @_;
   my $req = Plack::Request->new($env);
@@ -192,8 +176,27 @@ sub file_search {
 
     $context->{query} = $params;
     $context->{query_url} = $self->module_query_url($params);
-    $self->_module_query($params);
-  };
+
+    $self->module_data($params)->then(sub {
+      Future->done( search_return [ map +{
+        _score => 1,
+        fields => {
+          release => $_->{release},
+          author => $_->{author},
+          date => $_->{date},
+          status => $_->{status},
+          module => [
+            {
+              name => $_->{module},
+              version => $_->{version},
+            },
+          ],
+          'module.name' => $_->{module},
+          'module.version' => $_->{version},
+        },
+      }, @_] );
+    });
+  });
 }
 
 sub module_search {
