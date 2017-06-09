@@ -185,40 +185,44 @@ sub module_search {
     };
     $context->{query} = $params;
     $context->{query_url} = $self->module_query_url($params);
-    my $mod_data = $self->module_data($params)
-      or die { code => 404 };
-    return {
-      release => $mod_data->{release},
-    };
-  };
+
+    $self->module_data($params)->then(sub {
+      if (@_) {
+        Future->done(map +{
+          release => $_->{release},
+        }, @_);
+      }
+      else {
+        Future->fail({ error => 'module not found', code => 404 });
+      }
+    });
+  });
 }
 
 sub release_search {
   my ($self, $env) = @_;
   my $req = Plack::Request->new($env);
-  _json_handler {
+  $self->_json_handler($env, sub {
     my $context = shift;
     my $source = $req->param('source');
     my $params = parse_release_query($json->decode($source));
     $context->{query} = $params;
-    my @releases = $self->release_data($params);
-    search_return [map +{ fields => $_ }, @releases];
-  };
+    $self->release_data($params)->then(sub {
+      Future->done( search_return [map +{ fields => $_ }, @_] );
+    });
+  });
 }
 
 sub redirect {
-  my ($self, $base) = @_;
+  my ($self, $base, $env) = @_;
   my $metacpan_url = $self->metacpan_url;
   my $base_url = $metacpan_url.$base.'/';
-  sub {
-    my $env = shift;
-    my $path = $env->{PATH_INFO};
-    $path =~ s{^/}{};
-    my $url = $base_url.url_encode($path);
-    $url .= '?'.$env->{QUERY_STRING}
-      if defined $env->{QUERY_STRING} && length $env->{QUERY_STRING};
-    [ 301, [ 'Location' => $url ], ['Moved'] ];
-  };
+  my $path = $env->{PATH_INFO};
+  $path =~ s{^/}{};
+  my $url = $base_url.url_encode($path);
+  $url .= '?'.$env->{QUERY_STRING}
+    if defined $env->{QUERY_STRING} && length $env->{QUERY_STRING};
+  [ 301, [ 'Location' => $url ], ['Moved'] ];
 }
 
 my $gone = [410, ['Content-Type' => 'text/html'], [<<'END_HTML']];
@@ -274,8 +278,8 @@ sub _build_app {
       mount '/' => sub { $self->module_search(@_) };
     };
     mount '/release/_search' => sub { $self->release_search(@_) };
-    mount '/pod' => $self->redirect('pod');
-    mount '/source' => $self->redirect('source');
+    mount '/pod'    => sub { $self->redirect('pod', @_) };
+    mount '/source' => sub { $self->redirect('source', @_) };
     mount '/' => sub { $gone };
   };
 }
