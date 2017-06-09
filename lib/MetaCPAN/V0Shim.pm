@@ -53,19 +53,24 @@ sub module_query_url {
     .(%$params ? '?'.build_urlencoded($params) : '');
 }
 
+my $decode = sub {
+  my $response = shift;
+  my $content = $response->content;
+  if ($response->is_error) {
+    my $error = $content;
+    eval { $error = $json->decode($error) };
+    if (ref $error && $error->{code} == 404) {
+      return Future->done;
+    }
+    return Future->fail($error);
+  }
+  Future->done($json->decode($content));
+};
+
 sub module_data {
   my ($self, $params) = @_;
   my $url = $self->module_query_url($params);
-  my $response = $self->ua->GET($url)->get;
-  if ($response->is_error) {
-    my $error = $response->content;
-    eval { $error = $json->decode($error) };
-    if (ref $error && $error->{code} == 404) {
-      return;
-    }
-    die $error;
-  }
-  my $data = $json->decode($response->content);
+  my $data = $self->ua->GET($url)->then($decode)->get;
   if (!$data->{download_url}) {
     return;
   }
@@ -99,18 +104,11 @@ sub release_data {
     fields => [ 'download_url', 'status', 'version' ],
   };
 
-  my $response = $self->ua->POST(
+  my $data = $self->ua->POST(
     $self->metacpan_url.'release/_search',
     $json->encode($query),
     content_type => 'application/json; charset=utf-8',
-  )->get;
-  if ($response->is_error) {
-    my $error = $response->content;
-    eval { $error = $json->decode($error) };
-    die $error;
-  }
-
-  my $data = $json->decode($response->content);
+  )->then($decode)->get;
   my $hits = $data->{hits}{hits} || die $data;
 
   Dlog_info { "result: $_" } map +{
