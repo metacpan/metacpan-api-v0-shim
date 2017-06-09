@@ -14,6 +14,7 @@ use IO::Async::Loop;
 use IO::Async::SSL;
 use IO::Socket::SSL qw(SSL_VERIFY_PEER);
 use Log::Contextual::Easy::Default;
+use Future;
 
 use MetaCPAN::V0Shim::Error;
 use MetaCPAN::V0Shim::Parser;
@@ -130,20 +131,29 @@ updated API documentation, and the /download_url/ end point for download
 information.
 END_INFO
   };
-  my $code = 200;
 
-  my $out;
-  if (!eval { $out = $cb->($context); 1 }) {
-    $code = ref $@ && $@->{code} || 500;
-    $out = (ref $@ && $@->{error}) ? { %{ $@ } } : { error => $@ };
-  }
-
-  $out->{x_metacpan_shim} = $context;
-  [
-    $code,
-    [ 'Content-Type' => 'application/json; charset=utf-8' ],
-    [ $json->encode($out) ],
-  ];
+  Future->call(sub {
+    Future->wrap($cb->($context));
+  })->then(
+    sub {
+      my $out = shift;
+      Future->done(200, $out);
+    },
+    sub {
+      my $error = shift;
+      my $code = ref $error && $error->{code} || 500;
+      my $out = (ref $error && $error->{error}) ? { %{ $error } } : { error => $error };
+      Future->done($code, $out);
+    },
+  )->then(sub {
+    my ($code, $out) = @_;
+    $out->{x_metacpan_shim} = $context;
+    Future->done([
+      $code,
+      [ 'Content-Type' => 'application/json; charset=utf-8' ],
+      [ $json->encode($out) ],
+    ]);
+  })->get;
 }
 
 sub _module_query {
