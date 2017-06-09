@@ -123,7 +123,12 @@ sub release_data {
 sub _json_handler (&) {
   my ($cb) = @_;
   my $context = {
-    info => 'metacpan-api-v0-shim v'.$VERSION.' - Only supports cpanm 1.7.  See https://github.com/metacpan/metacpan-api/blob/master/docs/API-docs.md for updated API documentation, and the /download_url/ end point for download information',
+    info => (<<"END_INFO" =~ s{\n}{ }r),
+metacpan-api-v0-shim v$VERSION - Only supports cpanm 1.7.
+See https://github.com/metacpan/metacpan-api/blob/master/docs/API-docs.md for
+updated API documentation, and the /download_url/ end point for download
+information.
+END_INFO
   };
   my $code = 200;
 
