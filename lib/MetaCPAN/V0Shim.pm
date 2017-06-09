@@ -5,11 +5,14 @@ use warnings;
 use JSON::MaybeXS;
 use Plack::Builder;
 use Plack::Request;
-use HTTP::Tiny;
 use Plack::Util;
 use CPAN::DistnameInfo;
 use WWW::Form::UrlEncoded qw(build_urlencoded);
 use URL::Encode qw(url_decode url_encode);
+use Net::Async::HTTP;
+use IO::Async::Loop;
+use IO::Async::SSL;
+use IO::Socket::SSL qw(SSL_VERIFY_PEER);
 use Log::Contextual::Easy::Default;
 
 use MetaCPAN::V0Shim::Error;
@@ -20,8 +23,17 @@ use Moo;
 our $VERSION = '0.001';
 
 has user_agent => (is => 'ro', default => 'metacpan-api-v0-shim/'.$VERSION);
+has loop => (is => 'lazy', default => sub { IO::Async::Loop->new });
 has ua => (is => 'lazy', default => sub {
-  HTTP::Tiny->new(agent => $_[0]->user_agent);
+  my $self = shift;
+  my $http = Net::Async::HTTP->new(
+    max_connections_per_host => 4,
+    timeout => 10,
+    decode_content => 1,
+    SSL_verify_mode => SSL_VERIFY_PEER,
+  );
+  $self->loop->add($http);
+  return $http;
 });
 has metacpan_url => (is => 'ro', default => 'https://fastapi.metacpan.org/v1/');
 has app => (is => 'lazy');
@@ -43,16 +55,16 @@ sub module_query_url {
 sub module_data {
   my ($self, $params) = @_;
   my $url = $self->module_query_url($params);
-  my $response = $self->ua->get($url);
-  if (!$response->{success}) {
-    my $error = $response->{content};
+  my $response = $self->ua->GET($url)->get;
+  if ($response->is_error) {
+    my $error = $response->content;
     eval { $error = $json->decode($error) };
     if (ref $error && $error->{code} == 404) {
       return;
     }
     die $error;
   }
-  my $data = $json->decode($response->{content});
+  my $data = $json->decode($response->content);
   if (!$data->{download_url}) {
     return;
   }
@@ -86,18 +98,18 @@ sub release_data {
     fields => [ 'download_url', 'status', 'version' ],
   };
 
-  my $ua = $self->ua;
-  my $response = $ua->post($self->metacpan_url.'release/_search', {
-    headers => { 'Content-Type' => 'application/json; charset=utf-8' },
-    content => $json->encode($query),
-  });
-  if (!$response->{success}) {
-    my $error = $response->{content};
+  my $response = $self->ua->POST(
+    $self->metacpan_url.'release/_search',
+    $json->encode($query),
+    content_type => 'application/json; charset=utf-8',
+  )->get;
+  if ($response->is_error) {
+    my $error = $response->content;
     eval { $error = $json->decode($error) };
     die $error;
   }
 
-  my $data = $json->decode($response->{content});
+  my $data = $json->decode($response->content);
   my $hits = $data->{hits}{hits} || die $data;
 
   Dlog_info { "result: $_" } map +{
