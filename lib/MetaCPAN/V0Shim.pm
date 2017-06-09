@@ -12,6 +12,8 @@ use Moo;
 use WWW::Form::UrlEncoded qw(build_urlencoded);
 use Log::Contextual::Easy::Default;
 
+use MetaCPAN::V0Shim::Error;
+
 our $VERSION = '0.001';
 
 has user_agent => (is => 'ro', default => 'metacpan-api-v0-shim/'.$VERSION);
@@ -20,46 +22,6 @@ has ua => (is => 'lazy', default => sub {
 });
 has metacpan_url => (is => 'ro', default => 'https://fastapi.metacpan.org/v1/');
 has app => (is => 'lazy');
-
-{
-  package MetaCPAN::V0Shim::Error;
-  use Data::Dumper::Concise ();
-
-  use overload
-    '""' => '_stringify',
-    'bool' => sub () {1},
-    fallback => 1,
-  ;
-
-  sub new {
-    my $class = shift;
-    bless {@_}, $class;
-  }
-
-  sub _stringify {
-    my %out = %{$_[0]};
-    my $error = delete $out{error};
-    my $where = delete $out{where};
-    if (keys %out) {
-      $error .= ': ' . Data::Dumper::Concise::Dumper(\%out);
-      $error =~ s/\n*\z//;
-    }
-    $error .= " at $where\n";
-    $error;
-  }
-
-  sub throw {
-    my $class = shift;
-    die $class->new(@_);
-  }
-}
-
-sub _die {
-  my ($message, @extra) = @_;
-  my ($package, $filename, $line) = caller;
-
-  MetaCPAN::V0Shim::Error->throw(error => $message, where => "$filename line $line", @extra);
-}
 
 sub _deep {
   my ($struct, @path) = @_;
