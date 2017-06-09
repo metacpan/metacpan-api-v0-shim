@@ -140,28 +140,39 @@ information.
 END_INFO
   };
 
-  Future->call(sub {
-    Future->wrap($cb->($context));
-  })->then(
-    sub {
-      my $out = shift;
-      Future->done(200, $out);
-    },
-    sub {
-      my $error = shift;
-      my $code = ref $error && $error->{code} || 500;
-      my $out = (ref $error && $error->{error}) ? { %{ $error } } : { error => $error };
-      Future->done($code, $out);
-    },
-  )->then(sub {
-    my ($code, $out) = @_;
-    $out->{x_metacpan_shim} = $context;
-    Future->done([
-      $code,
-      [ 'Content-Type' => 'application/json; charset=utf-8' ],
-      [ $json->encode($out) ],
-    ]);
-  })->get;
+  my $delayed = sub {
+    my $responder = shift;
+
+    my $future = Future->call(sub {
+      Future->wrap($cb->($context));
+    })->then(
+      sub {
+        my $out = shift;
+        Future->done(200, $out);
+      },
+      sub {
+        my $error = shift;
+        my $code = ref $error && $error->{code} || 500;
+        my $out = (ref $error && $error->{error}) ? { %{ $error } } : { error => $error };
+        Future->done($code, $out);
+      },
+    )->then(sub {
+      my ($code, $out) = @_;
+      $out->{x_metacpan_shim} = $context;
+      Future->done([
+        $code,
+        [ 'Content-Type' => 'application/json; charset=utf-8' ],
+        [ $json->encode($out) ],
+      ]);
+    })->then(sub {
+      $responder->(@_);
+      Future->done;
+    })->else_done;
+    $future->get
+  };
+  my $out;
+  $delayed->(sub { $out = $_[0] });
+  return $out;
 }
 
 sub file_search {
