@@ -30,24 +30,6 @@ sub search_return {
   { hits => { hits => $_[0] } };
 }
 
-=head1 NAME
-
-MetaCPAN::V0Shim - Compatibility shim to accomodate cpanm's v0 API usage.
-
-=head1 DESCRIPTION
-
-Serves a compatibility layer that will translate cpanm's use of the metacpan API
-into C</download_url/> calls.
-
-=head1 FUNCTIONS
-
-=head2 module_data
-
-Accepts a query structure as given by cpanm, and returns a hashref of module
-for a found module.
-
-=cut
-
 sub module_data {
   my ($self, $params, $context) = @_;
   $params = { %$params };
@@ -87,15 +69,6 @@ sub module_data {
 }
 
 
-
-=head2 release_data
-
-Accepts a query structure as given by cpanm, and returns a list of hashrefs
-for a given release.
-
-Returned hashrefs will include download_url, stat, and status.
-
-=cut
 
 sub release_data {
   my ($self, $params, $context) = @_;
@@ -299,3 +272,29 @@ sub _build_app {
 }
 
 1;
+__END__
+
+=head1 NAME
+
+MetaCPAN::V0Shim - Compatibility shim to accomodate cpanm's v0 API usage.
+
+=head1 DESCRIPTION
+
+Serves a compatibility layer that will translate cpanm's use of the metacpan API
+into C</download_url/> calls.
+
+=head1 FUNCTIONS
+
+=head2 module_data
+
+Accepts a query structure as given by cpanm, and returns a hashref of module
+for a found module.
+
+=head2 release_data
+
+Accepts a query structure as given by cpanm, and returns a list of hashrefs
+for a given release.
+
+Returned hashrefs will include download_url, stat, and status.
+
+=cut
