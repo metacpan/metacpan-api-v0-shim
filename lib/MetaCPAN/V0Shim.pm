@@ -7,9 +7,9 @@ use Plack::Builder;
 use Plack::Request;
 use HTTP::Tiny;
 use CPAN::DistnameInfo;
-use URI::Escape qw(uri_escape uri_unescape);
 use Moo;
 use WWW::Form::UrlEncoded qw(build_urlencoded);
+use URL::Encode qw(url_decode url_encode);
 use Log::Contextual::Easy::Default;
 
 use MetaCPAN::V0Shim::Error;
@@ -177,7 +177,7 @@ sub module_search {
     my $context = shift;
     my $module = $req->path;
     $module =~ s{^/}{};
-    $module = uri_unescape($module);
+    $module = url_decode($module);
     my $params = {
       module => $module,
     };
@@ -212,7 +212,7 @@ sub redirect {
     my $env = shift;
     my $path = $env->{PATH_INFO};
     $path =~ s{^/}{};
-    my $url = $base_url.uri_escape($path);
+    my $url = $base_url.url_encode($path);
     $url .= '?'.$env->{QUERY_STRING}
       if defined $env->{QUERY_STRING} && length $env->{QUERY_STRING};
     [ 301, [ 'Location' => $url ], ['Moved'] ];
