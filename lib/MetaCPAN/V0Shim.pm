@@ -272,15 +272,13 @@ sub _build_app {
   my $self = shift;
   builder {
     enable sub { $self->log_wrap(@_) };
-    mount '/file/_search' => sub { $self->file_search(@_) };
-    mount '/module/' => builder {
-      mount '/_search' => sub { $self->file_search(@_) };
-      mount '/' => sub { $self->module_search(@_) };
-    };
-    mount '/release/_search' => sub { $self->release_search(@_) };
+    mount '/file/_search'     => sub { $self->file_search(@_) };
+    mount '/module/_search'   => sub { $self->file_search(@_) };
+    mount '/module/'          => sub { $self->module_search(@_) };
+    mount '/release/_search'  => sub { $self->release_search(@_) };
     mount '/pod'    => sub { $self->redirect('pod', @_) };
     mount '/source' => sub { $self->redirect('source', @_) };
-    mount '/' => sub { $gone };
+    mount '/'       => sub { $gone };
   };
 }
 
