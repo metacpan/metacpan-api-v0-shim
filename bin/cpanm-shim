@@ -4,10 +4,12 @@ use warnings;
 
 use Getopt::Long qw(:config gnu_getopt pass_through permute);
 
+my $log_level = 'warn';
 GetOptions(
   'cpanm=s'         => \my $cpanm,
   'force-mc!'       => \(my $force_mc = 1),
-  'debug!'          => \my $debug,
+  'debug'           => sub { $log_level = 'debug' },
+  'log|log-level=s' => \$log_level,
 ) or die "Error in command line arguments.\n";
 
 if (!defined $cpanm) {
@@ -26,10 +28,9 @@ my @libs = do {
 };
 
 my @opts;
-push @opts, 'disable-metadb'
+push @opts, disable_metadb => 1
   if $force_mc;
-push @opts, 'debug'
-  if $debug;
+push @opts, log_level => $log_level;
 
 my @args = @ARGV;
 unshift @args, '--metacpan'
@@ -41,4 +42,3 @@ exec
   "-MMetaCPAN::V0Shim::cpanm_hook".(@opts ? '='.join(',', @opts) : ''),
   $cpanm,
   @args;
-
