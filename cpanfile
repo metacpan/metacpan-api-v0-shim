@@ -1,3 +1,4 @@
+requires 'Gazelle';
 requires 'JSON::MaybeXS';
 requires 'Plack::Builder';
 requires 'Plack::Request';
