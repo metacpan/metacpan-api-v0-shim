@@ -12,7 +12,7 @@ RUN \
     cpm install --show-build-log-on-failure
 EOT
 
-ENV PERL5LIB="/metacpan-api-v0-shim/local/lib/perl5"
+ENV PERL5LIB="/metacpan-api-v0-shim/lib:/metacpan-api-v0-shim/local/lib/perl5"
 ENV PATH="/metacpan-api-v0-shim/local/bin:${PATH}"
 
 COPY app.psgi ./
