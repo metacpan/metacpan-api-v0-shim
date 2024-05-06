@@ -35,7 +35,7 @@ jobs:
           flavor: |
             latest=false
           tags: |
-            type=sha
+            type=sha,format=long
             type=ref,event=branch
             type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
@@ -47,7 +47,7 @@ jobs:
           flavor: |
             latest=false
           tags: |
-            type=sha
+            type=sha,format=long
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
