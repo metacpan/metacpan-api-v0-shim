@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - master
+      - staging
+      - prod
   pull_request:
     branches:
       - master
@@ -19,13 +21,13 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       - name: Build test image
+        id: docker-build-test
         uses: docker/build-push-action@v5
         with:
-          tags: ${{ github.repository }}:test
           target: test
           push: false
       - name: Run Perl tests
-        run: docker run -i ${{ github.repository }}:test
+        run: docker run -i ${{ steps.docker-build-test.outputs.imageid }}
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -34,19 +36,10 @@ jobs:
           flavor: |
             latest=false
           tags: |
-            type=sha,format=long
+            type=sha,format=long,priority=1000
             type=ref,event=branch
             type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
-      - name: Docker meta (sha)
-        id: docker-sha-tag
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ github.repository }}
-          flavor: |
-            latest=false
-          tags: |
-            type=sha,format=long
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -54,4 +47,4 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           annotations: ${{ steps.meta.outputs.annotations }}
       - if: contains( fromJSON(steps.meta.outputs.json).tags, "${{ github.repository }}:latest")
-        run: echo 'need update to ${{ steps.docker-sha-tag.outputs.tags }}'
+        run: echo 'need update to ${{ fromJSON(steps.meta.outputs.json).tags[0] }}'
