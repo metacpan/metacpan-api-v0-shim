@@ -1,5 +1,4 @@
----
-name: Build deployment container
+name: Build container
 on:
   push:
     branches:
