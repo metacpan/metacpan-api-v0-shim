@@ -9,7 +9,7 @@ COPY cpanfile cpanfile.snapshot ./
 RUN \
     --mount=type=cache,target=/root/.perl-cpm,sharing=private \
 <<EOT /bin/bash -euo pipefail
-    cpm install --show-build-log-on-failure
+    cpm install --show-build-log-on-failure --resolver=snapshot
 EOT
 
 ENV PERL5LIB="/metacpan-api-v0-shim/lib:/metacpan-api-v0-shim/local/lib/perl5"
