@@ -418,8 +418,12 @@ sub release_data {
         ],
       },
     },
-    _source => [ 'stat' ],
-    fields => [ 'download_url', 'status', 'version' ],
+    _source => [ qw(
+      download_url
+      stat
+      status
+      version
+    ) ],
   };
 
   my $ua = $self->ua;
@@ -437,10 +441,10 @@ sub release_data {
   my $hits = $data->{hits}{hits} || die $data;
 
   map +{
-    download_url => $_->{fields}{download_url},
-    status => $_->{fields}{status},
+    download_url => $_->{_sources}{download_url},
+    status => $_->{_source}{status},
     stat => $_->{_source}{stat},
-    version => $_->{fields}{version},
+    version => $_->{_source}{version},
   }, @$hits;
 }
 
