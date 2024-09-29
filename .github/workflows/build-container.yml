@@ -6,15 +6,23 @@ on:
       - staging
       - prod
   pull_request:
+    types: [opened, synchronize, labeled]
     branches:
       - master
   workflow_dispatch:
 jobs:
-  docker:
+  docker-build:
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'build-container')
     runs-on: ubuntu-22.04
     name: Docker Build and Push
     steps:
-      - uses: actions/checkout@v4
+      - name: Generate Auth Token
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: metacpan
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -22,21 +30,16 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Generate Auth Token
-        uses: actions/create-github-app-token@v1
-        id: app-token
+      - uses: actions/checkout@v4
         with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          token: ${{ steps.app-token.outputs.token }}
       - name: Build test image
         id: docker-build-test
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           target: test
           push: false
           load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
       - name: Run Perl tests
         run: docker run -i ${{ steps.docker-build-test.outputs.imageid }}
       - name: Docker meta
@@ -47,18 +50,19 @@ jobs:
           flavor: |
             latest=false
           tags: |
-            type=sha,format=long,priority=1000
+            type=sha,format=long,priority=2000,enable={{is_default_branch}}
             type=ref,event=branch
             type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
       - name: Update deployed image
         if: ${{ contains( fromJSON(steps.meta.outputs.json).tags, format('{0}:latest', github.repository)) }}
         uses: benc-uk/workflow-dispatch@v1
