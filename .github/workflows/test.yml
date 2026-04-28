@@ -1,0 +1,59 @@
+name: test
+on:
+  push:
+    branches:
+      - 'master'
+  merge_group:
+  pull_request:
+    branches:
+      - '*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    name: Test
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: docker/setup-buildx-action@v4
+      - name: Build test image
+        id: docker-build-test
+        uses: docker/build-push-action@v7
+        with:
+          target: test
+          push: false
+          load: true
+          cache-from: type=gha,scope=docker-test
+          cache-to: type=gha,mode=max,scope=docker-test
+      - name: Run Perl tests
+        run: docker run -i ${{ steps.docker-build-test.outputs.imageid }}
+  code-formatting:
+    runs-on: ubuntu-24.04
+    name: Code Formatting
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Fetch base ref
+        if: ${{ github.event.pull_request }}
+        run: git fetch origin ${{ github.base_ref }}:upstream
+      - name: Select files
+        id: select-files
+        run: |
+          if [[ -n "${{ github.event.pull_request.number }}" ]]; then
+            echo "precious-args=--git-diff-from upstream" >> "$GITHUB_OUTPUT"
+          else
+            echo 'precious-args=--all' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Build and test
+        run: >
+          docker compose run --build
+          api-v0-shim-server sh -c '
+          git config --global --add safe.directory /app &&
+          precious lint ${{ steps.select-files.outputs.precious-args }}
+          '
