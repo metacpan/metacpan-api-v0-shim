@@ -15,3 +15,9 @@ on test => sub {
   requires 'Plack::Test';
   requires 'LWP::Protocol::PSGI' => '0.10';
 };
+
+on develop => sub {
+  requires 'Perl::Critic';
+  requires 'Perl::Tidy';
+  requires 'App::perlimports';
+};
