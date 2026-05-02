@@ -1,0 +1,15 @@
+services:
+  api-v0-shim-server:
+    build:
+      context: .
+      target: develop
+    volumes:
+      - './:/app/'
+      - '/app/local'
+    ports:
+      - '5001:8008'
+    init: true
+    develop:
+      watch:
+        - path: ./cpanfile
+          action: rebuild

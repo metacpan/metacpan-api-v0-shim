@@ -1,0 +1,27 @@
+name: Enable Auto-Merge For bots
+on:
+  pull_request_target:
+    types: [opened]
+
+permissions: {}
+
+jobs:
+  enable-auto-merge:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.pull_request.user.login == 'metacpan-automation[bot]'
+      || github.event.pull_request.user.login == 'dependabot[bot]'
+    steps:
+      - name: Generate Auth Token
+        uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permissions-pull-requests: write
+      - name: Enable Pull Request Auto Merge
+        id: dispatch
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          PULL_REQUEST: ${{ github.event.pull_request.number }}
+        run: gh pr merge --merge --auto "$PULL_REQUEST"

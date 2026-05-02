@@ -10,65 +10,44 @@ on:
     branches:
       - master
   workflow_dispatch:
+permissions: {}
 jobs:
   docker-build:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'build-container')
     runs-on: ubuntu-22.04
     name: Docker Build and Push
+    permissions:
+      packages: write
     steps:
       - name: Generate Auth Token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          app-id: ${{ secrets.APP_ID }}
+          client-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: metacpan
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USER }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - uses: actions/checkout@v4
+          permission-contents: read
+          permission-actions: write
+      - uses: actions/checkout@v6
         with:
           token: ${{ steps.app-token.outputs.token }}
-      - name: Build test image
-        id: docker-build-test
-        uses: docker/build-push-action@v6
+      - name: Docker build test
+        run: docker build . --target test --tag test
+      - name: Docker test
+        run: docker run test
+      - uses: metacpan/metacpan-actions/docker-build-push@master
+        id: build-push
         with:
-          target: test
-          push: false
-          load: true
-      - name: Run Perl tests
-        run: docker run -i ${{ steps.docker-build-test.outputs.imageid }}
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ github.repository }}
-          flavor: |
-            latest=false
-          tags: |
-            type=sha,format=long,priority=2000,enable={{is_default_branch}}
-            type=ref,event=branch
-            type=ref,event=pr
-            type=raw,value=latest,enable={{is_default_branch}}
-        env:
-          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          annotations: ${{ steps.meta.outputs.annotations }}
+          docker_hub_username: ${{ secrets.DOCKER_HUB_USER }}
+          docker_hub_password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          ghcr_username: ${{ github.repository_owner }}
+          ghcr_password: ${{ secrets.GITHUB_TOKEN }}
       - name: Update deployed image
-        if: ${{ contains( fromJSON(steps.meta.outputs.json).tags, format('{0}:latest', github.repository)) }}
-        uses: benc-uk/workflow-dispatch@v1
+        if: ${{ fromJSON(steps.build-push.outputs.tag-fq).latest }}
+        uses: metacpan/metacpan-actions/update-deployed-tag@master
         with:
-          repo: metacpan/metacpan-k8s
-          ref: main
-          workflow: set-image.yml
           token: ${{ steps.app-token.outputs.token }}
-          inputs: '{ "app": "api-v0-shim", "environment": "prod", "base-tag": "${{ github.repository }}:latest", "tag": "${{ fromJSON(steps.meta.outputs.json).tags[0] }}" }'
+          app: api-v0-shim
+          environment: prod
+          base-tag: ${{ fromJSON(steps.build-push.outputs.tag-fq).latest }}
+          tag: ${{ fromJSON(steps.build-push.outputs.tag-fq).sha }}
