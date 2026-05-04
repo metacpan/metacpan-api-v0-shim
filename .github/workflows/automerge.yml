@@ -20,8 +20,8 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           permissions-pull-requests: write
       - name: Enable Pull Request Auto Merge
-        id: dispatch
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           PULL_REQUEST: ${{ github.event.pull_request.number }}
-        run: gh pr merge --merge --auto "$PULL_REQUEST"
+          REPOSITORY: ${{ github.repository }}
+        run: gh pr merge -R "$REPOSITORY" --merge --auto "$PULL_REQUEST"
