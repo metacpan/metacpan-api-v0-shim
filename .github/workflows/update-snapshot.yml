@@ -10,6 +10,7 @@ jobs:
   update-dep:
     runs-on: 'ubuntu-24.04'
     steps:
+      - uses: docker/setup-buildx-action@v4
       - name: Generate Auth Token
         uses: actions/create-github-app-token@v3
         id: app-token
@@ -25,7 +26,8 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
       - name: Update cpanfile.snapshot
-        uses: metacpan/metacpan-actions/update-snapshot@master
+        run: |
+          docker compose run --build --user root api-v0-shim-server bash -c 'rm -rf cpanfile.snapshot local/* && cpm install --with-develop --with-test && carton'
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
         with:
