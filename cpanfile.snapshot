@@ -17,19 +17,19 @@ DISTRIBUTIONS
       POSIX::strftime::Compiler 0.30
       Time::Local 0
       perl 5.008001
-  App-perlimports-0.000065
-    pathname: O/OA/OALDERS/App-perlimports-0.000065.tar.gz
+  App-perlimports-0.000067
+    pathname: O/OA/OALDERS/App-perlimports-0.000067.tar.gz
     provides:
-      App::perlimports 0.000065
-      App::perlimports::Annotations 0.000065
-      App::perlimports::CLI 0.000065
-      App::perlimports::Config 0.000065
-      App::perlimports::Document 0.000065
-      App::perlimports::ExportInspector 0.000065
-      App::perlimports::Include 0.000065
-      App::perlimports::Role::Logger 0.000065
-      App::perlimports::Sandbox 0.000065
-      App::perlimports::Sorter 0.000065
+      App::perlimports 0.000067
+      App::perlimports::Annotations 0.000067
+      App::perlimports::CLI 0.000067
+      App::perlimports::Config 0.000067
+      App::perlimports::Document 0.000067
+      App::perlimports::ExportInspector 0.000067
+      App::perlimports::Include 0.000067
+      App::perlimports::Role::Logger 0.000067
+      App::perlimports::Sandbox 0.000067
+      App::perlimports::Sorter 0.000067
     requirements:
       Capture::Tiny 0
       Class::Inspector 1.36
@@ -1736,10 +1736,10 @@ DISTRIBUTIONS
       perl 5.008001
       strict 0
       warnings 0
-  Package-Stash-XS-0.30
-    pathname: E/ET/ETHER/Package-Stash-XS-0.30.tar.gz
+  Package-Stash-XS-0.32
+    pathname: E/ET/ETHER/Package-Stash-XS-0.32.tar.gz
     provides:
-      Package::Stash::XS 0.30
+      Package::Stash::XS 0.32
     requirements:
       ExtUtils::MakeMaker 0
       XSLoader 0
