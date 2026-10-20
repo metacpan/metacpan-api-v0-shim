@@ -212,11 +212,12 @@ DISTRIBUTIONS
       Module::Build::Tiny 0.035
       URI::Escape 0
       perl 5.008001
-  Cpanel-JSON-XS-4.53
-    pathname: R/RU/RURBAN/Cpanel-JSON-XS-4.53.tar.gz
+  Cpanel-JSON-XS-4.80
+    pathname: R/RU/RURBAN/Cpanel-JSON-XS-4.80.tar.gz
     provides:
-      Cpanel::JSON::XS 4.53
-      Cpanel::JSON::XS::Type undef
+      Cpanel::JSON::XS 4.80
+      Cpanel::JSON::XS::Boolean 4.80
+      Cpanel::JSON::XS::Type 4.80
     requirements:
       Carp 0
       Config 0
@@ -2123,12 +2124,12 @@ DISTRIBUTIONS
     requirements:
       ExtUtils::MakeMaker 0
       perl 5.008001
-  Plack-1.0054
-    pathname: M/MI/MIYAGAWA/Plack-1.0054.tar.gz
+  Plack-1.0055
+    pathname: M/MI/MIYAGAWA/Plack-1.0055.tar.gz
     provides:
       HTTP::Message::PSGI undef
       HTTP::Server::PSGI undef
-      Plack 1.0054
+      Plack 1.0055
       Plack::App::CGIBin undef
       Plack::App::Cascade undef
       Plack::App::Directory undef
@@ -2187,9 +2188,9 @@ DISTRIBUTIONS
       Plack::Middleware::XFramework undef
       Plack::Middleware::XSendfile undef
       Plack::Recursive::ForwardRequest undef
-      Plack::Request 1.0054
+      Plack::Request 1.0055
       Plack::Request::Upload undef
-      Plack::Response 1.0054
+      Plack::Response 1.0055
       Plack::Runner undef
       Plack::TempBuffer undef
       Plack::Test undef
@@ -2943,42 +2944,42 @@ DISTRIBUTIONS
     requirements:
       ExtUtils::MakeMaker 0
       perl 5.008
-  YAML-PP-v0.41.0
-    pathname: T/TI/TINITA/YAML-PP-v0.41.0.tar.gz
+  YAML-PP-v0.43.0
+    pathname: T/TI/TINITA/YAML-PP-v0.43.0.tar.gz
     provides:
-      YAML::PP v0.41.0
-      YAML::PP::Common v0.41.0
-      YAML::PP::Constructor v0.41.0
-      YAML::PP::Dumper v0.41.0
-      YAML::PP::Emitter v0.41.0
-      YAML::PP::Exception v0.41.0
-      YAML::PP::Grammar v0.41.0
-      YAML::PP::Highlight v0.41.0
-      YAML::PP::Lexer v0.41.0
-      YAML::PP::Loader v0.41.0
-      YAML::PP::Parser v0.41.0
-      YAML::PP::Perl v0.41.0
-      YAML::PP::Preserve::Array v0.41.0
-      YAML::PP::Preserve::Hash v0.41.0
-      YAML::PP::Preserve::Scalar v0.41.0
-      YAML::PP::Reader v0.41.0
-      YAML::PP::Reader::File v0.41.0
-      YAML::PP::Render v0.41.0
-      YAML::PP::Representer v0.41.0
-      YAML::PP::Schema v0.41.0
-      YAML::PP::Schema::Binary v0.41.0
-      YAML::PP::Schema::Catchall v0.41.0
-      YAML::PP::Schema::Core v0.41.0
-      YAML::PP::Schema::Failsafe v0.41.0
-      YAML::PP::Schema::Include v0.41.0
-      YAML::PP::Schema::JSON v0.41.0
-      YAML::PP::Schema::Merge v0.41.0
-      YAML::PP::Schema::Perl v0.41.0
-      YAML::PP::Schema::Tie::IxHash v0.41.0
-      YAML::PP::Schema::YAML1_1 v0.41.0
-      YAML::PP::Type::MergeKey v0.41.0
-      YAML::PP::Writer v0.41.0
-      YAML::PP::Writer::File v0.41.0
+      YAML::PP v0.43.0
+      YAML::PP::Common v0.43.0
+      YAML::PP::Constructor v0.43.0
+      YAML::PP::Dumper v0.43.0
+      YAML::PP::Emitter v0.43.0
+      YAML::PP::Exception v0.43.0
+      YAML::PP::Grammar v0.43.0
+      YAML::PP::Highlight v0.43.0
+      YAML::PP::Lexer v0.43.0
+      YAML::PP::Loader v0.43.0
+      YAML::PP::Parser v0.43.0
+      YAML::PP::Perl v0.43.0
+      YAML::PP::Preserve::Array v0.43.0
+      YAML::PP::Preserve::Hash v0.43.0
+      YAML::PP::Preserve::Scalar v0.43.0
+      YAML::PP::Reader v0.43.0
+      YAML::PP::Reader::File v0.43.0
+      YAML::PP::Render v0.43.0
+      YAML::PP::Representer v0.43.0
+      YAML::PP::Schema v0.43.0
+      YAML::PP::Schema::Binary v0.43.0
+      YAML::PP::Schema::Catchall v0.43.0
+      YAML::PP::Schema::Core v0.43.0
+      YAML::PP::Schema::Failsafe v0.43.0
+      YAML::PP::Schema::Include v0.43.0
+      YAML::PP::Schema::JSON v0.43.0
+      YAML::PP::Schema::Merge v0.43.0
+      YAML::PP::Schema::Perl v0.43.0
+      YAML::PP::Schema::Tie::IxHash v0.43.0
+      YAML::PP::Schema::YAML1_1 v0.43.0
+      YAML::PP::Type::MergeKey v0.43.0
+      YAML::PP::Writer v0.43.0
+      YAML::PP::Writer::File v0.43.0
     requirements:
       B 0
       B::Deparse 0
@@ -2988,6 +2989,7 @@ DISTRIBUTIONS
       Exporter 0
       ExtUtils::MakeMaker 0
       File::Basename 0
+      File::Spec 0
       Getopt::Long 0
       MIME::Base64 0
       Module::Load 0
